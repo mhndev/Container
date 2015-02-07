@@ -164,7 +164,8 @@ class ContainerManager implements iContainer
             // - iCServiceAware interface
             $thisContainer = $this;
             $this->initializer->addMethod(function($service) use ($thisContainer) {
-                if($service instanceof iCServiceAware)
+                if ($service instanceof iCServiceAware)
+                    // Inject Service Container Inside
                     $service->setServiceContainer($thisContainer);
             });
         }

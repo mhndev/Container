@@ -59,11 +59,17 @@ class ServiceInitializer implements iInitializer
         foreach($prioQueue as $int)
         {
             // TODO: Exception Retrieval
-            // TODO: INITIALIZER
 
             if (is_callable($int))
                 // func($service)
                 call_user_func_array($int, [$service]);
+            elseif ($int instanceof iInitializer)
+                $int->initialize($service);
+            else
+                throw new \InvalidArgumentException(sprintf(
+                    'Invalid Initializer Provided. (%s)'
+                    , serialize($int)
+                ));
         }
     }
 
