@@ -1,8 +1,13 @@
 <?php
 namespace Poirot\Container;
 
+use Poirot\Container\Exception\CreationException;
+use Poirot\Container\Exception\NotFoundException;
 use Poirot\Container\Interfaces\iContainer;
 use Poirot\Container\Interfaces\iCService;
+use Poirot\Container\Interfaces\iCServiceAware;
+use Poirot\Container\Interfaces\iInitializer;
+use Poirot\Core\Builder;
 
 class ContainerManager implements iContainer
 {
@@ -24,6 +29,11 @@ class ContainerManager implements iContainer
     protected $services = [];
 
     /**
+     * @var Builder Instance Initializer
+     */
+    protected $initializer;
+
+    /**
      * @var array shared instances
      */
     protected $__shared = [];
@@ -37,10 +47,20 @@ class ContainerManager implements iContainer
      * Construct
      *
      * @param string $namespace
+     * @throws \Exception
      */
     function __construct($namespace)
     {
-       $this->namespace = $namespace;
+        // TODO: Visitor to Container Builder
+
+        if (!is_string($namespace) || $namespace === '' )
+            throw new \Exception(sprintf(
+                'Namespace must be a none empty string, you injected "%s:(%s)".'
+                , gettype($namespace)
+                , $namespace
+            ));
+
+        $this->namespace = $namespace;
     }
 
     /**
@@ -89,22 +109,67 @@ class ContainerManager implements iContainer
         $inService = $this->services[$cName];
 
         // Service From Cache:
-        if (!$inService->getRefreshRetrieve())
+        if (!$inService->getRefreshRetrieve()) {
             // Use Retrieved Instance Before
             if (isset($this->__shared[$cName]))
                 return $this->__shared[$cName];
+        } else {
+            // Store as shared instance
+            $instance = &$this->__shared[$cName];
+        }
 
         // Refresh Service:
-        try {
-            // Retrieve Instance From Service
-            $return = $inService->createService();
-        } catch(\Exception $e) {
+        try
+        {
+            $instance = $this->__createFromService($inService);
+        }
+        catch(\Exception $e) {
             throw new Exception\CreationException(sprintf(
                 'An exception was raised while creating "%s"; no instance returned'
                 , $name), $e->getCode(), $e);
         }
 
+        $return = $instance;
+
         return $return;
+    }
+
+        /* Create Service Instance */
+        protected function __createFromService($inService)
+        {
+            if ($inService instanceof iCServiceAware)
+                // Inject Service Container Inside Service
+                $inService->setServiceContainer($this);
+
+            // Retrieve Instance From Service
+            $rInstance = $inService->createService();
+
+            // Build Instance By Initializers:
+            $this->initializer()->initialize($rInstance);
+
+            return $rInstance;
+        }
+
+    /**
+     * Builder Initializer Aggregate
+     *
+     * @return iInitializer
+     */
+    function initializer()
+    {
+        if (!$this->initializer) {
+            $this->initializer = new ServiceInitializer();
+
+            // add default initializer for
+            // - iCServiceAware interface
+            $thisContainer = $this;
+            $this->initializer->addMethod(function($service) use ($thisContainer) {
+                if($service instanceof iCServiceAware)
+                    $service->setServiceContainer($thisContainer);
+            });
+        }
+
+        return $this->initializer;
     }
 
     /**
