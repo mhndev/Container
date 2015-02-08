@@ -228,7 +228,18 @@ class ContainerManager implements iContainer
             throw new \InvalidArgumentException('Invalid service name alias');
 
         if ($this->hasAlias($alias))
-            throw new \Exception('Invalid service name alias');
+            throw new \Exception(sprintf(
+                'Alias name "%s" is given.'
+                , $alias
+            ));
+
+        // Alias is present as a service
+        if ($this->has($alias))
+            if (!$this->services[$this->canonicalizeName($alias)]->getAllowOverride())
+                throw new \Exception(sprintf(
+                    'A service by the name "%s" already exists and cannot be overridden by Alias name; please use an alternate name',
+                    $alias
+                ));
 
         $cAlias = $this->canonicalizeName($alias);
         $this->aliases[$cAlias] = $serviceOrAlias;
@@ -267,8 +278,6 @@ class ContainerManager implements iContainer
 
         return isset($this->aliases[$cAlias]);
     }
-
-
 
     /**
      * Canonicalize name
