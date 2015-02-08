@@ -39,6 +39,11 @@ class ContainerManager implements iContainer
     protected $__shared = [];
 
     /**
+     * @var array Service Aliases
+     */
+    protected $aliases = [];
+
+    /**
      * @var array internal cache
      */
     protected $__canonicalNames = [];
@@ -52,6 +57,7 @@ class ContainerManager implements iContainer
      * @var null Container That Nested To
      */
     protected $__nestLeft = null;
+
 
     /**
      * Construct
@@ -203,6 +209,66 @@ class ContainerManager implements iContainer
 
         return isset($this->services[$cName]);
     }
+
+    /**
+     * Set Alias Name For Registered Service
+     *
+     * - Aliases Can be set even if service not found
+     *   or service added later
+     *
+     * @param string $alias          Alias
+     * @param string $serviceOrAlias Registered Service Name/Alias
+     *
+     * @throws \Exception
+     * @return $this
+     */
+    function setAlias($alias, $serviceOrAlias)
+    {
+        if ($alias == '' || $serviceOrAlias == '')
+            throw new \InvalidArgumentException('Invalid service name alias');
+
+        if ($this->hasAlias($alias))
+            throw new \Exception('Invalid service name alias');
+
+        $cAlias = $this->canonicalizeName($alias);
+        $this->aliases[$cAlias] = $serviceOrAlias;
+
+        return $this;
+    }
+
+    /**
+     * Get Service Name Of Alias Point
+     *
+     * - return same name if alias not present
+     *
+     * @param  string $alias
+     *
+     * @return false | string
+     */
+    function getAliasPoint($alias)
+    {
+        while ($this->hasAlias($alias)) {
+            $cAlias = $this->canonicalizeName($alias);
+            $alias  = $this->aliases[$cAlias];
+        }
+
+        return $alias;
+    }
+
+    /**
+     * Determine if we have an alias
+     *
+     * @param  string $alias
+     * @return bool
+     */
+    function hasAlias($alias)
+    {
+        $cAlias = $this->canonicalizeName($alias);
+
+        return isset($this->aliases[$cAlias]);
+    }
+
+
 
     /**
      * Canonicalize name
