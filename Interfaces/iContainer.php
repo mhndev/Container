@@ -1,7 +1,10 @@
 <?php
 namespace Poirot\Container\Interfaces;
 
-interface iContainer 
+use Poirot\Container\Exception\CreationException;
+use Poirot\Container\Exception\NotFoundException;
+
+interface iContainer
 {
     /**
      * Retrieve a registered instance
