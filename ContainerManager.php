@@ -121,10 +121,15 @@ class ContainerManager implements iContainer
      */
     function get($name)
     {
+        $orgName = $name;
+        $name = $this->getAliasPoint($name);
+
         if (!$this->has($name))
             throw new Exception\NotFoundException(sprintf(
-                'An alias/service "%s" was requested but no service could be found.',
-                $name
+                '%s "%s" was requested but no service could be found.',
+                ($name !== $orgName) ? "Service \"$name\" with called alias"
+                    : 'Service',
+                $orgName
             ));
 
         $cName = $this->canonicalizeName($name);
