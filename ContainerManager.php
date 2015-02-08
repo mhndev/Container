@@ -4,6 +4,7 @@ namespace Poirot\Container;
 use Poirot\Container\Exception\CreationException;
 use Poirot\Container\Exception\NotFoundException;
 use Poirot\Container\Interfaces\iContainer;
+use Poirot\Container\Interfaces\iContainerBuilder;
 use Poirot\Container\Interfaces\iCService;
 use Poirot\Container\Interfaces\iCServiceAware;
 use Poirot\Container\Interfaces\iInitializer;
@@ -14,7 +15,7 @@ class ContainerManager implements iContainer
     /**
      * Separator between namespaces
      */
-    const SEPARATOR = '/';
+    #const SEPARATOR = '/';
 
     /**
      * @var string Container namespace
@@ -62,13 +63,18 @@ class ContainerManager implements iContainer
     /**
      * Construct
      *
-     * @param string $namespace
+     * @param iContainerBuilder $cBuilder
+     *
      * @throws \Exception
      */
-    function __construct($namespace)
+    function __construct(iContainerBuilder $cBuilder = null)
     {
-        // TODO: Visitor to Container Builder
+        if ($cBuilder)
+            $cBuilder->buildContainer($this);
+    }
 
+    function setNamespace($namespace)
+    {
         if (!is_string($namespace) || $namespace === '' )
             throw new \Exception(sprintf(
                 'Namespace must be a none empty string, you injected "%s:(%s)".'
@@ -76,13 +82,13 @@ class ContainerManager implements iContainer
                 , $namespace
             ));
 
-        $this->__setNamespace($namespace);
+        $this->namespace = $namespace;
     }
 
-        protected function __setNamespace($namespace)
-        {
-            $this->namespace = $namespace;
-        }
+    function getNamespace()
+    {
+        return $this->namespace;
+    }
 
     // Service Manager:
 
@@ -313,17 +319,17 @@ class ContainerManager implements iContainer
     function nest(ContainerManager $container, $namespace = null)
     {
         // Use Container Namespace if not provided as argument
-        $namespace = ($namespace === null) ? $container->namespace : $namespace;
+        $namespace = ($namespace === null) ? $container->getNamespace() : $namespace;
 
         if (isset($this->__nestRight[$namespace]))
             throw new \InvalidArgumentException(sprintf(
                 'Namespace "%s" is exists on container:%s'
-                , $namespace , $this->namespace
+                , $namespace , $this->getNamespace()
             ));
 
         $nestedCnt = clone $container;
         $nestedCnt->__nestLeft = $this; // set parent container
-        $nestedCnt->__setNamespace($namespace);
+        $nestedCnt->setNamespace($namespace);
 
         $this->__nestRight[$namespace] = $nestedCnt;
 
