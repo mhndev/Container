@@ -113,9 +113,6 @@ class ContainerManager implements iContainer
             // Use Retrieved Instance Before
             if (isset($this->__shared[$cName]))
                 return $this->__shared[$cName];
-        } else {
-            // Store as shared instance
-            $instance = &$this->__shared[$cName];
         }
 
         // Refresh Service:
@@ -129,9 +126,10 @@ class ContainerManager implements iContainer
                 , $name), $e->getCode(), $e);
         }
 
-        $return = $instance;
+        // Store Latest Instance So Work With RefreshRetrieve Service Option
+        $this->__shared[$cName] = $instance;
 
-        return $return;
+        return $this->__shared[$cName];
     }
 
         /* Create Service Instance */
