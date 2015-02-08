@@ -1,7 +1,9 @@
 <?php
 namespace Poirot\Container\Service;
 
+use Poirot\Container\Interfaces\iContainer;
 use Poirot\Container\Interfaces\iCService;
+use Poirot\Container\Interfaces\iCServiceAware;
 use Poirot\Core\AbstractOptions;
 
 /**
@@ -13,7 +15,8 @@ use Poirot\Core\AbstractOptions;
  */
 abstract class AbstractService extends AbstractOptions
     implements
-    iCService
+    iCService,
+    iCServiceAware
 {
     /**
      * @var string Service Name
@@ -35,6 +38,12 @@ abstract class AbstractService extends AbstractOptions
      * @var boolean
      */
     protected $allowOverride = true;
+
+    /**
+     * implement iCServiceAware
+     * @var iContainer Injected Container
+     */
+    protected $sc;
 
     /**
      * Create Service
@@ -115,6 +124,28 @@ abstract class AbstractService extends AbstractOptions
     function getAllowOverride()
     {
         return $this->allowOverride;
+    }
+
+    // Implement iCServiceAware:
+
+    /**
+     * Set Service Container
+     *
+     * @param iContainer $container
+     */
+    function setServiceContainer(iContainer $container)
+    {
+        $this->sc = $container;
+    }
+
+    /**
+     * Get Service Container
+     *
+     * @return iContainer
+     */
+    function getServiceContainer()
+    {
+        return $this->sc;
     }
 }
  
