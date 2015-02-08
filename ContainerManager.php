@@ -137,9 +137,8 @@ class ContainerManager implements iContainer
         /* Create Service Instance */
         protected function __createFromService($inService)
         {
-            if ($inService instanceof iCServiceAware)
-                // Inject Service Container Inside Service
-                $inService->setServiceContainer($this);
+            // Initialize Service
+            $this->initializer()->initialize($inService);
 
             // Retrieve Instance From Service
             $rInstance = $inService->createService();
@@ -160,14 +159,17 @@ class ContainerManager implements iContainer
         if (!$this->initializer) {
             $this->initializer = new ServiceInitializer();
 
-            // add default initializer for
-            // - iCServiceAware interface
+            // add default initializer:
+
+            // ---- All Closures Methods Bind Within Service Object
+            // ---- So, $this referee to those service object
             $thisContainer = $this;
-            $this->initializer->addMethod(function($service) use ($thisContainer) {
-                if ($service instanceof iCServiceAware)
+            $this->initializer->addMethod(function() use ($thisContainer) {
+                if ($this instanceof iCServiceAware)
                     // Inject Service Container Inside
-                    $service->setServiceContainer($thisContainer);
-            });
+                    $this->setServiceContainer($thisContainer);
+            }, 10000);
+            // ------------------------------------------------------------
         }
 
         return $this->initializer;

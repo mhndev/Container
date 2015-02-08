@@ -54,21 +54,27 @@ class ServiceInitializer implements iInitializer
      */
     function initialize($service)
     {
-        $prioQueue = clone $this->queue();
-
-        foreach($prioQueue as $int)
+        foreach(clone $this->queue() as $initializer)
         {
             // TODO: Exception Retrieval
 
-            if (is_callable($int))
-                // func($service)
-                call_user_func_array($int, [$service]);
-            elseif ($int instanceof iInitializer)
-                $int->initialize($service);
+            if ($initializer instanceof \Closure) {
+                /** @var \Closure $initializer */
+                if (is_object($service)) {
+                    // Bind Initializer within service
+                    $initializer = $initializer->bindTo($service);
+                    $initializer();
+                } else {
+                    // initializer($service)
+                    call_user_func_array($initializer, [$service]);
+                }
+            }
+            elseif ($initializer instanceof iInitializer)
+                $initializer->initialize($service);
             else
                 throw new \InvalidArgumentException(sprintf(
                     'Invalid Initializer Provided. (%s)'
-                    , serialize($int)
+                    , serialize($initializer)
                 ));
         }
     }
