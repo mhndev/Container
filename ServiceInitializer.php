@@ -66,7 +66,7 @@ class ServiceInitializer implements iInitializer
                     $initializer();
                 } else {
                     // initializer($service)
-                    call_user_func_array($initializer, [$service]);
+                    call_user_func_array($initializer, [&$service]);
                 }
             }
             elseif ($initializer instanceof iInitializer)
