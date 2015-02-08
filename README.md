@@ -5,6 +5,20 @@ Modern. Fast. Minimalism. Service Manager Container.
 ## Overview usage sample
 
 ```php
+class defaultService extends AbstractService 
+{
+    /**
+     * Create Service
+     *
+     * @return mixed
+     */
+    function createService()
+    {
+        return new Directory();
+    }
+}
+
+
 $container = new ContainerManager('main');
 $container->set(new FactoryService(['name' => 'sysdir',
     'delegate' => function() {
