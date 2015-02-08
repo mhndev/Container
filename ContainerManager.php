@@ -44,6 +44,16 @@ class ContainerManager implements iContainer
     protected $__canonicalNames = [];
 
     /**
+     * @var array Child Nested Containers
+     */
+    protected $__nestRight = [];
+
+    /**
+     * @var null Container That Nested To
+     */
+    protected $__nestLeft = null;
+
+    /**
      * Construct
      *
      * @param string $namespace
@@ -60,8 +70,15 @@ class ContainerManager implements iContainer
                 , $namespace
             ));
 
-        $this->namespace = $namespace;
+        $this->__setNamespace($namespace);
     }
+
+        protected function __setNamespace($namespace)
+        {
+            $this->namespace = $namespace;
+        }
+
+    // Service Manager:
 
     /**
      * Register a service to container
@@ -201,5 +218,70 @@ class ContainerManager implements iContainer
         return $this->__canonicalNames[$name] = strtolower(
             strtr($name, ['-' => '', '_' => '', ' ' => '', '\\' => '', '/' => ''])
         );
+    }
+
+    // Nested Containers:
+
+    /**
+     * Nest A Copy Of Container Within This Container
+     *
+     * @param ContainerManager $container
+     * @param string|null      $namespace Container Namespace
+     *
+     * @return $this
+     */
+    function nest(ContainerManager $container, $namespace = null)
+    {
+        // Use Container Namespace if not provided as argument
+        $namespace = ($namespace === null) ? $container->namespace : $namespace;
+
+        if (isset($this->__nestRight[$namespace]))
+            throw new \InvalidArgumentException(sprintf(
+                'Namespace "%s" is exists on container:%s'
+                , $namespace , $this->namespace
+            ));
+
+        $nestedCnt = clone $container;
+        $nestedCnt->__nestLeft = $this; // set parent container
+        $nestedCnt->__setNamespace($namespace);
+
+        $this->__nestRight[$namespace] = $nestedCnt;
+
+        return $this;
+    }
+
+    /**
+     * Retrieve Nested Container
+     *
+     * @param string $namespace
+     *
+     * @throws \Exception On Namespace not found
+     * @return ContainerManager
+     */
+    function from($namespace)
+    {
+        if (!isset($this->__nestRight[$namespace]))
+            throw new \Exception(sprintf(
+                'No nested container found for "%s".'
+                , $namespace
+            ));
+
+        return $this->__nestRight[$namespace];
+    }
+
+    /**
+     * Retrieve Or Build Nested Container
+     *
+     * @param string $namespace
+     *
+     * @return ContainerManager
+     */
+    function with($namespace)
+    {
+        if (!isset($this->__nestRight[$namespace])) {
+            $this->nest(new $this(), $namespace);
+        }
+
+        return $this->from($namespace);
     }
 }
