@@ -184,7 +184,7 @@ class ContainerManager implements iContainer
     /**
      * Builder Initializer Aggregate
      *
-     * @return iInitializer
+     * @return ServiceInitializer
      */
     function initializer()
     {
@@ -320,6 +320,12 @@ class ContainerManager implements iContainer
     {
         // Use Container Namespace if not provided as argument
         $namespace = ($namespace === null) ? $container->getNamespace() : $namespace;
+
+        if ($namespace === null || $namespace === '')
+            throw new \InvalidArgumentException(sprintf(
+                'Namespace can`t be empty And Must Set.'
+                , $namespace , $this->getNamespace()
+            ));
 
         if (isset($this->__nestRight[$namespace]))
             throw new \InvalidArgumentException(sprintf(
