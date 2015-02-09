@@ -7,7 +7,6 @@ use Poirot\Container\Interfaces\iContainer;
 use Poirot\Container\Interfaces\iContainerBuilder;
 use Poirot\Container\Interfaces\iCService;
 use Poirot\Container\Interfaces\iCServiceAware;
-use Poirot\Container\Interfaces\iInitializer;
 use Poirot\Core\Builder;
 
 class ContainerManager implements iContainer
@@ -15,17 +14,17 @@ class ContainerManager implements iContainer
     /**
      * Separator between namespaces
      */
-    #const SEPARATOR = '/';
+    const SEPARATOR = '/';
 
     /**
      * @var string Container namespace
      */
-    protected $namespace = '';
+    protected $namespace;
 
     /**
      * Registered Services
-     *
      * @var array[iCService]
+     * canonicalized names
      */
     protected $services = [];
 
@@ -36,11 +35,13 @@ class ContainerManager implements iContainer
 
     /**
      * @var array shared instances
+     * canonicalized names
      */
     protected $__shared = [];
 
     /**
      * @var array Service Aliases
+     * canonicalized names
      */
     protected $aliases = [];
 
@@ -75,14 +76,7 @@ class ContainerManager implements iContainer
 
     function setNamespace($namespace)
     {
-        if (!is_string($namespace) || $namespace === '' )
-            throw new \Exception(sprintf(
-                'Namespace must be a none empty string, you injected "%s:(%s)".'
-                , gettype($namespace)
-                , $namespace
-            ));
-
-        $this->namespace = $namespace;
+        $this->namespace = $this->canonicalizeName($namespace);
     }
 
     function getNamespace()
@@ -293,17 +287,36 @@ class ContainerManager implements iContainer
     /**
      * Canonicalize name
      *
+     * - the name can't contains separate(/) string
+     *
      * @param  string $name
+     *
+     * @throws \Exception
      * @return string
      */
     protected function canonicalizeName($name)
     {
+        if (!is_string($name) || $name === '' )
+            throw new \Exception(sprintf(
+                'Name must be a none empty string, you injected "%s:(%s)".'
+                , gettype($name)
+                , $name
+            ));
+
         if (isset($this->__canonicalNames[$name]))
             return $this->__canonicalNames[$name];
 
-        return $this->__canonicalNames[$name] = strtolower(
-            strtr($name, ['-' => '', '_' => '', ' ' => '', '\\' => '', '/' => ''])
+        $canonicalName = strtolower(
+            strtr($name, [' ' => '', '\\' => self::SEPARATOR])
         );
+
+        if (strstr($name, self::SEPARATOR) !== false)
+            throw new \Exception(sprintf(
+                'Service Or Alias Name Cant Contains Separation String (%s).'
+                , self::SEPARATOR
+            ));
+
+        return $this->__canonicalNames[$name] = $canonicalName;
     }
 
     // Nested Containers:
@@ -319,7 +332,8 @@ class ContainerManager implements iContainer
     function nest(ContainerManager $container, $namespace = null)
     {
         // Use Container Namespace if not provided as argument
-        $namespace = ($namespace === null) ? $container->getNamespace() : $namespace;
+        $namespace = ($namespace === null) ? $container->getNamespace()
+            : $this->canonicalizeName($namespace);
 
         if ($namespace === null || $namespace === '')
             throw new \InvalidArgumentException(sprintf(
@@ -352,13 +366,32 @@ class ContainerManager implements iContainer
      */
     function from($namespace)
     {
-        if (!isset($this->__nestRight[$namespace]))
-            throw new \Exception(sprintf(
-                'No nested container found for "%s".'
-                , $namespace
-            ));
+        $namespace = rtrim($namespace, self::SEPARATOR);
+        $brkNamespace = explode(self::SEPARATOR, $namespace);
 
-        return $this->__nestRight[$namespace];
+        if (count($brkNamespace) == 1) {
+            // Single namespace found on container itself
+            if (!isset($this->__nestRight[$namespace]))
+                throw new \Exception(sprintf(
+                    'No nested container found for "%s".'
+                    , $namespace
+                ));
+
+            return $this->__nestRight[$namespace];
+        }
+
+        $cNamespace = array_shift($brkNamespace);
+        $cContainer = $this;
+        if ($cNamespace === '') {
+            // Goto Root Container
+            while ($cContainer->__nestLeft) {
+                $cContainer = $cContainer->__nestLeft;
+            }
+        }
+        else
+            $cContainer = $this->from($cNamespace);
+
+        return $cContainer->from(implode(self::SEPARATOR, $brkNamespace));
     }
 
     /**
@@ -370,6 +403,8 @@ class ContainerManager implements iContainer
      */
     function with($namespace)
     {
+        $namespace = $this->canonicalizeName($namespace);
+
         if (!isset($this->__nestRight[$namespace])) {
             $this->nest(new $this(), $namespace);
         }
