@@ -121,3 +121,37 @@ $container = new ContainerManager(new ContainerBuilder([
     ],
 ]));
 ```
+
+## Shared Service as Alias
+
+```php
+$container = new ContainerManager(new ContainerBuilder([
+    'namespace' => 'main',
+    'aliases' => [
+        'sysdir' => ['/filesystem/system', 'folder'],  // <<<====---- Shared Alias
+    ],
+    'nested' => [
+        [
+            'namespace' => 'filesystem',
+            'nested' => [
+                'system' => [
+                    'services'  => [
+                        new defaultService(['name' => 'directory' // <<<===--- share this
+                            , 'refresh_retrieve' => false
+                            , 'allow_override' => true
+                        ])
+                    ],
+                    'aliases' => [
+                        'dir'    => 'directory',
+                        'folder' => 'dir', // <<<===--- consumed here
+                    ],
+                ],
+            ],
+        ],
+    ],
+]));
+
+/** @var Directory $dir */
+$dir = $container->get('sysdir')
+    ->scanDir();
+```

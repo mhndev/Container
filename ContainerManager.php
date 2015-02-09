@@ -123,6 +123,10 @@ class ContainerManager implements iContainer
     {
         $orgName = $name;
         $name = $this->getAliasPoint($name);
+        if (is_array($name))
+            // shared alias for nested container
+            // @see $this->setAlias(...)
+            return $this->from($name[0])->get($name[1]);
 
         if (!$this->has($name))
             throw new Exception\NotFoundException(sprintf(
@@ -218,11 +222,14 @@ class ContainerManager implements iContainer
     /**
      * Set Alias Name For Registered Service
      *
+     * - Alias point can be in form of ['/filesystem/system', 'folder'],
+     *   that mean, alias name is alias from /filesystem/system/
+     *   for folder service
      * - Aliases Can be set even if service not found
      *   or service added later
      *
      * @param string $alias          Alias
-     * @param string $serviceOrAlias Registered Service Name/Alias
+     * @param string $serviceOrAlias Registered Service/Alias
      *
      * @throws \Exception
      * @return $this
@@ -238,15 +245,15 @@ class ContainerManager implements iContainer
                 , $alias
             ));
 
-        // Alias is present as a service
+        $cAlias = $this->canonicalizeName($alias);
         if ($this->has($alias))
-            if (!$this->services[$this->canonicalizeName($alias)]->getAllowOverride())
+            // Alias is present as a service
+            if (!$this->services[$cAlias]->getAllowOverride())
                 throw new \Exception(sprintf(
                     'A service by the name "%s" already exists and cannot be overridden by Alias name; please use an alternate name',
                     $alias
                 ));
 
-        $cAlias = $this->canonicalizeName($alias);
         $this->aliases[$cAlias] = $serviceOrAlias;
 
         return $this;
@@ -266,6 +273,12 @@ class ContainerManager implements iContainer
         while ($this->hasAlias($alias)) {
             $cAlias = $this->canonicalizeName($alias);
             $alias  = $this->aliases[$cAlias];
+            if (is_array($alias))
+                // we have an aliases that used as
+                // share services between nested services
+                // in form of 'sysdir' => ['/filesystem/system', 'folder'],
+                // that mean, sysdir is alias from /filesystem/system/ for folder service
+                break;
         }
 
         return $alias;
