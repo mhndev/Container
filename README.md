@@ -39,7 +39,45 @@ $nest->setAlias('boom', 'boomService');
 
 $container->nest($nest, 'files');
 
-/** @var Directory $dir */
+$dir = $container->get('sysdir')
+    ->scanDir();
+```
+
+## Or From Builder
+
+```php
+$container = new ContainerManager(new ContainerBuilder([
+    'namespace' => 'main',
+    'services'  => [
+        'FactoryService' => [ // Prefixed with Container namespace
+            'name' => 'sysdir',
+            'delegate' => function() {
+                // Delegates will bind to service object as closure method
+                /** @var FactoryService $this */
+                $sc = $this->getServiceContainer();
+                return $sc->from('files')->get('folder');
+            },
+            'refresh_retrieve' => false,
+            'allow_override' => false
+        ],
+    ],
+    'nested' => [
+        [
+            'namespace' => 'files',
+            'services'  => [
+                new defaultService(['name' => 'directory'
+                    , 'refresh_retrieve' => false
+                    , 'allow_override' => true
+                ])
+            ],
+            'aliases' => [
+                'dir'    => 'directory',
+                'folder' => 'dir',
+            ],
+        ],
+    ],
+]));
+
 $dir = $container->get('sysdir')
     ->scanDir();
 ```
