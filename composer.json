@@ -9,6 +9,9 @@
             "role": "Developer"
         }
     ],
+    "require": {
+        "poirot/core": "dev-master"
+    },
     "target-dir": "Poirot/Container",
     "autoload"  : {
         "psr-0": {
