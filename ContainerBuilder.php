@@ -139,16 +139,22 @@ class ContainerBuilder extends AbstractOptions
             foreach($this->services as $key => $service) {
                 if (is_string($key) && is_array($service)) {
                     // [ 'serviceClass' => [ /* options */ ], ...]
-                    if (strstr($key, '\\') === false)
+                    if (!class_exists($key) && strstr($key, '\\') === false)
                         // this is FactoryService style,
                         // must prefixed with own namespace
                         $key = '\\'.__NAMESPACE__.'\\Service\\'.$key;
-                    if (!class_exists($key))
-                        throw new \Exception($this->namespace.": Service '$key' not found as Class Name.");
 
-                    $service = new $key($service);
+                    $class = $key;
+                } else {
+                    // Looking For 'Sc\Services\Session' Style
+                    $class   = $service;
+                    $service = []; // reset service without options
                 }
 
+                if (!class_exists($class))
+                    throw new \Exception($this->namespace.": Service '$key' not found as Class Name.");
+
+                $service = new $class($service);
                 if (!$service instanceof iCService)
                     throw new \InvalidArgumentException($this->namespace.": Service '$key' not recognized.");
 
