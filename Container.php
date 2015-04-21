@@ -28,7 +28,7 @@ class Container implements iContainer
     protected $services = [];
 
     /**
-     * @var ContainerServiceCServiceInitializer Instance Initializer
+     * @var ContainerServiceInitializer Instance Initializer
      */
     protected $initializer;
 
@@ -181,12 +181,12 @@ class Container implements iContainer
     /**
      * Builder Initializer Aggregate
      *
-     * @return ContainerServiceCServiceInitializer
+     * @return ContainerServiceInitializer
      */
     function initializer()
     {
         if (!$this->initializer) {
-            $this->initializer = new ContainerServiceCServiceInitializer();
+            $this->initializer = new ContainerServiceInitializer();
 
             // add default initializer:
 

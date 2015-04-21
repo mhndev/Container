@@ -3,7 +3,7 @@ namespace Poirot\Container;
 
 use Poirot\Container\Interfaces\iCServiceInitializer;
 
-class ContainerServiceCServiceInitializer implements iCServiceInitializer
+class ContainerServiceInitializer implements iCServiceInitializer
 {
     protected $priorityQueue;
 
