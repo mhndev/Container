@@ -3,7 +3,7 @@ namespace Poirot\Container;
 
 use Poirot\Container\Interfaces\iContainerBuilder;
 use Poirot\Container\Interfaces\iCService;
-use Poirot\Container\Interfaces\iInitializer;
+use Poirot\Container\Interfaces\iCServiceInitializer;
 use Poirot\Core\AbstractOptions;
 
 /**
@@ -41,11 +41,11 @@ $container = new ContainerManager(new ContainerBuilder([
         'alias' => 'service',
     ],
     'initializers' => [
-        // priority => callable,
+        // $priority => callable,
         // iInitializer,
-        // priority => [ // here
-        //    priority    => 10, // or here
-        //    initializer => callable | iInitializer, // iInitializer priority will override
+        // $priority => [ // here
+        //    'priority'    => 10, // or here
+        //    'initializer' => callable | iInitializer, // iInitializer priority will override
         // ],
     ],
     'nested' => [
@@ -72,14 +72,14 @@ class ContainerBuilder extends AbstractOptions
     /**
      * Configure container manager
      *
-     * @param ContainerManager $container
+     * @param Container $container
      *
      * @throws \Exception
      * @return void
      */
     function buildContainer(/*ContainerManager*/ $container)
     {
-        if (!$container instanceof ContainerManager)
+        if (!$container instanceof Container)
             throw new \Exception(sprintf(
                 'Container must instanceof "ContainerManager", you given "%s".'
                 , (is_object($container)) ? get_class($container) : gettype($container)
@@ -93,7 +93,7 @@ class ContainerBuilder extends AbstractOptions
         // it become first c`use maybe used on Services Creation
         if (!empty($this->initializers))
             foreach ($this->initializers as $priority => $initializer) {
-                if ($initializer instanceof iInitializer)
+                if ($initializer instanceof iCServiceInitializer)
                     // [.. [ iInitializer, ...], ...]
                     $priority = null;
                 elseif (is_array($initializer)) {
@@ -104,7 +104,7 @@ class ContainerBuilder extends AbstractOptions
 
                 if (is_callable($initializer))
                     $container->initializer()->addMethod($initializer, $priority);
-                elseif ($initializer instanceof iInitializer)
+                elseif ($initializer instanceof iCServiceInitializer)
                     $container->initializer()->addInitializer(
                         $initializer
                         , ($priority === null) ? $initializer->getDefPriority() : $priority
@@ -115,9 +115,9 @@ class ContainerBuilder extends AbstractOptions
         if (!empty($this->nested))
             foreach($this->nested as $namespace => $nest) {
                 if (is_array($nest))
-                    $nest = new ContainerManager(new ContainerBuilder($nest));
+                    $nest = new Container(new ContainerBuilder($nest));
 
-                if (!$nest instanceof ContainerManager)
+                if (!$nest instanceof Container)
                     throw new \InvalidArgumentException(sprintf(
                         '%s: Nested container must instanceof "ContainerManager" but "%s" given.'
                         , $this->namespace, is_object($nest) ? get_class($nest) : gettype($nest)

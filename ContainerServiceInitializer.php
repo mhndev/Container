@@ -1,9 +1,9 @@
 <?php
 namespace Poirot\Container;
 
-use Poirot\Container\Interfaces\iInitializer;
+use Poirot\Container\Interfaces\iCServiceInitializer;
 
-class ServiceInitializer implements iInitializer
+class ContainerServiceCServiceInitializer implements iCServiceInitializer
 {
     protected $priorityQueue;
 
@@ -29,12 +29,12 @@ class ServiceInitializer implements iInitializer
      * Add Initializer Interface
      * Add Initializer Interface
      *
-     * @param iInitializer $initializer Initializer Interface
+     * @param iCServiceInitializer $initializer Initializer Interface
      * @param null|int     $priority    Priority
      *
      * @return $this
      */
-    function addInitializer(iInitializer $initializer, $priority = null)
+    function addInitializer(iCServiceInitializer $initializer, $priority = null)
     {
         $priority = ($priority == null)
             ? ( ($initializer->getPriority() !== null) ? $initializer->getPriority() : 10)
@@ -69,7 +69,7 @@ class ServiceInitializer implements iInitializer
                     call_user_func_array($initializer, [&$service]);
                 }
             }
-            elseif ($initializer instanceof iInitializer)
+            elseif ($initializer instanceof iCServiceInitializer)
                 $initializer->initialize($service);
             else
                 throw new \InvalidArgumentException(sprintf(

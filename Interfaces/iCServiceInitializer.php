@@ -1,7 +1,7 @@
 <?php
 namespace Poirot\Container\Interfaces;
 
-interface iInitializer 
+interface iCServiceInitializer
 {
     /**
      * Initialize Service

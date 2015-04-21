@@ -1,8 +1,8 @@
 <?php
 namespace Poirot\Container\Interfaces;
 
-use Poirot\Container\Exception\CreationException;
-use Poirot\Container\Exception\NotFoundException;
+use Poirot\Container\Exception\ContainerCreateServiceException;
+use Poirot\Container\Exception\ContainerServNotFoundException;
 
 interface iContainer
 {
@@ -11,7 +11,7 @@ interface iContainer
      *
      * @param string $service Service name
      *
-     * @throws CreationException|NotFoundException
+     * @throws ContainerCreateServiceException|ContainerServNotFoundException
      * @return object
      */
     function get($service);

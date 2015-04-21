@@ -1,5 +1,7 @@
 <?php
-namespace Poirot\Container\Interfaces;
+namespace Poirot\Container\Interfaces\Respec;
+
+use Poirot\Container\Interfaces\iContainer;
 
 /**
  * Interface iCServiceAware
@@ -16,11 +18,4 @@ interface iCServiceAware
      * @param iContainer $container
      */
     function setServiceContainer(iContainer $container);
-
-    /**
-     * Get Service Container
-     *
-     * @return iContainer
-     */
-    function getServiceContainer();
 }

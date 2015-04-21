@@ -7,7 +7,6 @@ interface iContainerBuilder
      * Configure container manager
      *
      * @param iContainer $container
-     * @return void
      */
     function buildContainer(/*iContainer*/ $container);
 }

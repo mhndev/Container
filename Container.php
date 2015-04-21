@@ -1,15 +1,14 @@
 <?php
 namespace Poirot\Container;
 
-use Poirot\Container\Exception\CreationException;
-use Poirot\Container\Exception\NotFoundException;
+use Poirot\Container\Exception\ContainerCreateServiceException;
+use Poirot\Container\Exception\ContainerServNotFoundException;
 use Poirot\Container\Interfaces\iContainer;
 use Poirot\Container\Interfaces\iContainerBuilder;
 use Poirot\Container\Interfaces\iCService;
-use Poirot\Container\Interfaces\iCServiceAware;
-use Poirot\Core\Builder;
+use Poirot\Container\Interfaces\Respec\iCServiceAware;
 
-class ContainerManager implements iContainer
+class Container implements iContainer
 {
     /**
      * Separator between namespaces
@@ -29,7 +28,7 @@ class ContainerManager implements iContainer
     protected $services = [];
 
     /**
-     * @var Builder Instance Initializer
+     * @var ContainerServiceCServiceInitializer Instance Initializer
      */
     protected $initializer;
 
@@ -116,7 +115,7 @@ class ContainerManager implements iContainer
      *
      * @param string $name Service name
      *
-     * @throws CreationException|NotFoundException
+     * @throws ContainerCreateServiceException|ContainerServNotFoundException
      * @return mixed
      */
     function get($name)
@@ -129,7 +128,7 @@ class ContainerManager implements iContainer
             return $this->from($name[0])->get($name[1]);
 
         if (!$this->has($name))
-            throw new Exception\NotFoundException(sprintf(
+            throw new Exception\ContainerServNotFoundException(sprintf(
                 '%s "%s" was requested but no service could be found.',
                 ($name !== $orgName) ? "Service \"$name\" with called alias"
                     : 'Service',
@@ -153,7 +152,7 @@ class ContainerManager implements iContainer
             $instance = $this->__createFromService($inService);
         }
         catch(\Exception $e) {
-            throw new Exception\CreationException(sprintf(
+            throw new Exception\ContainerCreateServiceException(sprintf(
                 'An exception was raised while creating "%s"; no instance returned'
                 , $name), $e->getCode(), $e);
         }
@@ -182,12 +181,12 @@ class ContainerManager implements iContainer
     /**
      * Builder Initializer Aggregate
      *
-     * @return ServiceInitializer
+     * @return ContainerServiceCServiceInitializer
      */
     function initializer()
     {
         if (!$this->initializer) {
-            $this->initializer = new ServiceInitializer();
+            $this->initializer = new ContainerServiceCServiceInitializer();
 
             // add default initializer:
 
@@ -337,12 +336,12 @@ class ContainerManager implements iContainer
     /**
      * Nest A Copy Of Container Within This Container
      *
-     * @param ContainerManager $container
+     * @param Container $container
      * @param string|null      $namespace Container Namespace
      *
      * @return $this
      */
-    function nest(ContainerManager $container, $namespace = null)
+    function nest(Container $container, $namespace = null)
     {
         // Use Container Namespace if not provided as argument
         $namespace = ($namespace === null) ? $container->getNamespace()
@@ -375,7 +374,7 @@ class ContainerManager implements iContainer
      * @param string $namespace
      *
      * @throws \Exception On Namespace not found
-     * @return ContainerManager
+     * @return Container
      */
     function from($namespace)
     {
@@ -412,7 +411,7 @@ class ContainerManager implements iContainer
      *
      * @param string $namespace
      *
-     * @return ContainerManager
+     * @return Container
      */
     function with($namespace)
     {
