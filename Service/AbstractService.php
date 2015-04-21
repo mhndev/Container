@@ -3,7 +3,8 @@ namespace Poirot\Container\Service;
 
 use Poirot\Container\Interfaces\iContainer;
 use Poirot\Container\Interfaces\iCService;
-use Poirot\Container\Interfaces\iCServiceAware;
+use Poirot\Container\Interfaces\Respec\iCServiceAware;
+use Poirot\Container\Interfaces\Respec\iCServiceProvider;
 use Poirot\Core\AbstractOptions;
 
 /**
@@ -16,7 +17,8 @@ use Poirot\Core\AbstractOptions;
 abstract class AbstractService extends AbstractOptions
     implements
     iCService,
-    iCServiceAware
+    iCServiceAware,
+    iCServiceProvider
 {
     /**
      * @var string Service Name
