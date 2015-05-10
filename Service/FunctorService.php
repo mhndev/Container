@@ -3,8 +3,8 @@ namespace Poirot\Container\Service;
 
 /**
  * $container->set(new FunctorService([
- *       'name'     => 'sysdir',
- *       'callback' => function($arg1, $arg2, ...) {
+ *       'name'     => 'service_name',
+ *       'callback' => function($arg1, $arg2) {
  *           # callback function will bind to service object as closure method
  *           # so you can access methods from FunctorService
  *           $sc = $this->getServiceContainer();
@@ -15,13 +15,33 @@ namespace Poirot\Container\Service;
  *       'refresh_retrieve' => true,
  *       'allow_override'   => false
  * ]));
+ *
+ * $container->get('service_name', [$arg1Val, $arg2Val]);
+ *
  */
 class FunctorService extends AbstractService
 {
     /**
+     * Function Arguments as a Container::get arg. options
+     *
+     * @var array
+     * @see Container::initializer
+     * @see Container::get
+     */
+    public $invoke_options;
+
+    /**
      * @var \Closure
      */
     protected $callback;
+
+    /**
+     * Indicate to retrieve refresh instance
+     * on creating service
+     *
+     * @var bool
+     */
+    protected $refreshInstance = true;
 
     /**
      * Set createService Delegate
@@ -51,6 +71,6 @@ class FunctorService extends AbstractService
     {
         $func = $this->callback;
 
-        return $func();
+        return call_user_func_array($func, $this->invoke_options);
     }
 }
