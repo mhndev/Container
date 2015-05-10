@@ -21,20 +21,28 @@ $container = new ContainerManager(new ContainerBuilder([
         ]),
  *
         // or
-        'FactoryService' => [ // Prefixed Internaly with Container namespace
-            'name' => 'sysdir',
+        # Service Name
+        'dev.lamp.status' => [
+            '_class_' => 'FactoryService', # Prefixed Internaly with Container namespace
+                                           # or full path 'Namespaces\Path\To\Service' class
+            // ... options setter of service class .........................................
             'delegate' => function() {
-                // Delegates will bind to service object as closure method
+                # Delegates will bind to service object as closure method
+                @var FactoryService $this
                 $sc = $this->getServiceContainer();
                 return $sc->from('files')->get('folder');
             },
             'refresh_retrieve' => false,
             'allow_override' => false
         ],
-        // or
-        'Namespaces\Path\To\Service' => [
-            'Option' => 'Value'
-        ]
+
+ *      // or
+        # just a iCService Implementation,
+        # service name are included in class
+        'ClassName',                      # Prefixed Internaly with Container namespace
+                                          # or full path 'Namespaces\Path\To\Service' class
+        // You Can Set Options
+        'ClassName' => [ 'option' => 'value' ],
  *
     ],
     'aliases' => [
@@ -137,15 +145,24 @@ class ContainerBuilder extends AbstractOptions
         // Service:
         if (!empty($this->services))
             foreach($this->services as $key => $service) {
-                if (is_string($key) && is_array($service)) {
-                    // [ 'serviceClass' => [ /* options */ ], ...]
+                if (is_string($key) && is_array($service))
+                {
+                    if (array_key_exists('_class_', $service)) {
+                        // [ 'service_name' => [ '_class_' => 'serviceClass', /* options */ ], ...]
+                        $service['name'] = $key;
+                        $key             = $service['_class_'];
+                        unset($service['_class_']);
+                    }
+                    // else: [ 'serviceClass' => [ /* options */ ], ...]
+
                     if (!class_exists($key) && strstr($key, '\\') === false)
                         // this is FactoryService style,
                         // must prefixed with own namespace
                         $key = '\\'.__NAMESPACE__.'\\Service\\'.$key;
 
                     $class = $key;
-                } else {
+                } else
+                {
                     // Looking For 'Sc\Services\Session' Style
                     $class   = $service;
                     $service = []; // reset service without options
