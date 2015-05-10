@@ -59,6 +59,11 @@ class Container implements iContainer
      */
     protected $__nestLeft = null;
 
+    /**
+     * @var array Create instance invoke options
+     */
+    protected $__invokeOptions;
+
 
     /**
      * Construct
@@ -113,18 +118,20 @@ class Container implements iContainer
     /**
      * Retrieve a registered instance
      *
-     * @param string $name Service name
+     * @param string $service Service name
+     * @param array  $invOpt  Invoke Options
      *
      * @throws ContainerCreateServiceException|ContainerServNotFoundException
      * @return mixed
      */
-    function get($name)
+    function get($service, $invOpt = [])
     {
+        $name = $service;
         $orgName = $name;
         $name = $this->getAliasPoint($name);
         if (is_array($name))
             // shared alias for nested container
-            // @see $this->setAlias(...)
+            /* @see setAlias */
             return $this->from($name[0])->get($name[1]);
 
         if (!$this->has($name))
@@ -139,28 +146,36 @@ class Container implements iContainer
         /** @var iCService $inService */
         $inService = $this->services[$cName];
 
+        # we want fresh shared for each service with new options
+        $hashed = md5($cName.serialize($invOpt));
+
         // Service From Cache:
         if (!$inService->getRefreshRetrieve()) {
             // Use Retrieved Instance Before
-            if (isset($this->__shared[$cName]))
-                return $this->__shared[$cName];
+            if (isset($this->__shared[$hashed]))
+                return $this->__shared[$hashed];
         }
 
         // Refresh Service:
         try
         {
+            $this->__invokeOptions = $invOpt;
+
             $instance = $this->__createFromService($inService);
+
+            $this->__invokeOptions = null;
         }
         catch(\Exception $e) {
             throw new Exception\ContainerCreateServiceException(sprintf(
                 'An exception was raised while creating "%s"; no instance returned'
-                , $name), $e->getCode(), $e);
+                , $name
+            ), $e->getCode(), $e);
         }
 
         // Store Latest Instance So Work With RefreshRetrieve Service Option
-        $this->__shared[$cName] = $instance;
+        $this->__shared[$hashed] = $instance;
 
-        return $this->__shared[$cName];
+        return $this->__shared[$hashed];
     }
 
         /* Create Service Instance */
@@ -198,6 +213,13 @@ class Container implements iContainer
                     // Inject Service Container Inside
                     $this->setServiceContainer($thisContainer);
             }, 10000);
+
+            $invOpts = $this->__invokeOptions;
+            $this->initializer->addMethod(function() use ($invOpts) {
+                if ($this instanceof iCService) {
+                    $this->invoke_options = $invOpts;
+                }
+            }, 10000);
             // ------------------------------------------------------------
         }
 
@@ -229,6 +251,8 @@ class Container implements iContainer
      *
      * @param string $alias          Alias
      * @param string $serviceOrAlias Registered Service/Alias
+     *                               - in form of 'sysdir' => ['/filesystem/system', 'folder'],
+     *                                 that mean, sysdir is alias from /filesystem/system/ for folder service
      *
      * @throws \Exception
      * @return $this

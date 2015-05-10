@@ -155,3 +155,27 @@ $container = new ContainerManager(new ContainerBuilder([
 $dir = $container->get('sysdir')
     ->scanDir();
 ```
+
+## Invoke Services With Service Options
+
+we can build any container service with some options
+ these options must implemented in iCService class interface
+ an example of usage is on FunctorService.
+
+```php
+$container->set(new FunctorService([
+   'name'     => 'service_name',
+   'callback' => function($arg1, $arg2) {
+       # callback function will bind to service object as closure method
+       # so you can access methods from FunctorService
+       $sc = $this->getServiceContainer();
+
+       # here we return service result
+       return $arg1.' '.$arg2;
+   },
+   'refresh_retrieve' => true,
+   'allow_override'   => false
+]));
+
+$container->get('service_name', [$arg1Val, $arg2Val]);
+```

@@ -21,6 +21,13 @@ abstract class AbstractService extends AbstractOptions
     iCServiceProvider
 {
     /**
+     * @var array
+     * @see Container::initializer
+     * @see Container::get
+     */
+    public $invoke_options;
+
+    /**
      * @var string Service Name
      */
     protected $name;

@@ -10,11 +10,12 @@ interface iContainer
      * Retrieve a registered instance
      *
      * @param string $service Service name
+     * @param array  $invOpt  Invoke Options
      *
      * @throws ContainerCreateServiceException|ContainerServNotFoundException
      * @return object
      */
-    function get($service);
+    function get($service, $invOpt = []);
 
     /**
      * Check for a registered instance
