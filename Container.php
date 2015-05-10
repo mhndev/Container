@@ -7,6 +7,7 @@ use Poirot\Container\Interfaces\iContainer;
 use Poirot\Container\Interfaces\iContainerBuilder;
 use Poirot\Container\Interfaces\iCService;
 use Poirot\Container\Interfaces\Respec\iCServiceAware;
+use Poirot\Container\Service\AbstractService;
 
 class Container implements iContainer
 {
@@ -225,10 +226,11 @@ class Container implements iContainer
                     $this->setServiceContainer($thisContainer);
             }, 10000);
 
-            $invOpts = $this->__invokeOptions;
-            $this->initializer->addMethod(function() use ($invOpts) {
+            $self = $this;
+            $this->initializer->addMethod(function() use ($self) {
                 if ($this instanceof iCService) {
-                    $this->invoke_options = $invOpts;
+                    /** @var AbstractService $this */
+                    $this->invoke_options = $self->__invokeOptions;
                 }
             }, 10000);
             // ------------------------------------------------------------
