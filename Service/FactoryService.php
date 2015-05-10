@@ -5,10 +5,12 @@ namespace Poirot\Container\Service;
  * $container->set(new FactoryService([
  *       'name' => 'sysdir',
  *       'delegate' => function() {
- *           // Delegates will bind to service object as closure method
- *          // @var FactoryService $this
- *          $sc = $this->getServiceContainer();
- *          return $sc->from('files')->get('folder');
+ *           # Delegates will bind to service object as closure method
+ *           # @var FactoryService $this
+ *           $sc = $this->getServiceContainer();
+ *
+ *           # here we return service instance
+ *           return $sc->from('files')->get('folder');
  *       },
  *       'refresh_retrieve' => false,
  *       'allow_override' => false
