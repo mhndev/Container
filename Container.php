@@ -226,6 +226,7 @@ class Container implements iContainer
                     $this->setServiceContainer($thisContainer);
             }, 10000);
 
+            // Inject Invoke Parameters into service to build:
             $self = $this;
             $this->initializer->addMethod(function() use ($self) {
                 if ($this instanceof iCService) {
@@ -373,8 +374,8 @@ class Container implements iContainer
     /**
      * Nest A Copy Of Container Within This Container
      *
-     * @param Container $container
-     * @param string|null      $namespace Container Namespace
+     * @param Container   $container
+     * @param string|null $namespace Container Namespace
      *
      * @return $this
      */
