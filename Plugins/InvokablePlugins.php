@@ -33,7 +33,11 @@ class InvokablePlugins
      */
     function __call($method, $argv)
     {
-        $plugin = $this->plugins->get($method, $argv); // create service with arguments
+        $options = [];
+        if (count($argv) == 1 && is_array($argv[0]))
+            $options = $argv[0];
+
+        $plugin = $this->plugins->get($method, $options); // create service with arguments
         if (is_callable($plugin))
             return call_user_func_array($plugin, $argv);
 
