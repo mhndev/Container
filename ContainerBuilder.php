@@ -84,6 +84,9 @@ class ContainerBuilder extends AbstractOptions
     /**
      * Configure container manager
      *
+     * // TODO 'HeaderLine' => 'Poirot\\Http\\Header\\HeaderLine',
+     * // TODO Clean up codes to more readable
+     *
      * @param Container $container
      *
      * @throws \Exception
