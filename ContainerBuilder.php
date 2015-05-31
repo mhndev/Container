@@ -148,13 +148,14 @@ class ContainerBuilder extends AbstractOptions
                 if (is_string($key) && is_array($service))
                 {
                     if (array_key_exists('_class_', $service)) {
-                        // [ 'service_name' => [ '_class_' => 'serviceClass', /* options */ ], ...]
+                    // *** [ 'service_name' => [ '_class_' => 'serviceClass', /* options */ ], ...]
+                    // ***
                         $service['name'] = $key;
                         $key             = $service['_class_'];
                         unset($service['_class_']);
                     }
-                    // else: [ 'serviceClass' => [ /* options */ ], ...]
-
+                    // *** else: [ 'serviceClass' => [ /* options */ ], ...]
+                    // ***
                     if (!class_exists($key) && strstr($key, '\\') === false)
                         // this is FactoryService style,
                         // must prefixed with own namespace
@@ -163,7 +164,8 @@ class ContainerBuilder extends AbstractOptions
                     $class = $key;
                 } else
                 {
-                    // Looking For 'Sc\Services\Session' Style
+                    // *** Looking For Class 'Path\To\Class'
+                    // ***
                     $class   = $service;
                     $service = []; // reset service without options
                 }
