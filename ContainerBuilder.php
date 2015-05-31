@@ -4,7 +4,9 @@ namespace Poirot\Container;
 use Poirot\Container\Interfaces\iContainerBuilder;
 use Poirot\Container\Interfaces\iCService;
 use Poirot\Container\Interfaces\iCServiceInitializer;
+use Poirot\Container\Service\FactoryService;
 use Poirot\Core\AbstractOptions;
+use Poirot\Core\Interfaces\iPoirotOptions;
 
 /**
 $container = new ContainerManager(new ContainerBuilder([
@@ -23,6 +25,7 @@ $container = new ContainerManager(new ContainerBuilder([
         // or
         # Service Name
         'dev.lamp.status' => [
+                          # or regular class object. (will create instance from factoryService)
             '_class_' => 'FactoryService', # Prefixed Internaly with Container namespace
                                            # or full path 'Namespaces\Path\To\Service' class
             // ... options setter of service class .........................................
@@ -42,7 +45,8 @@ $container = new ContainerManager(new ContainerBuilder([
         'ClassName',                      # Prefixed Internaly with Container namespace
                                           # or full path 'Namespaces\Path\To\Service' class
         // You Can Set Options
-        'ClassName' => [ 'option' => 'value' ],
+        # Implementation of iCService or ** any object
+ *      'ClassName' => [**'__name__' => 'serviceName', 'option' => 'value' ],
  *
     ],
     'aliases' => [
@@ -173,11 +177,28 @@ class ContainerBuilder extends AbstractOptions
                 if (!class_exists($class))
                     throw new \Exception($this->namespace.": Service '$key' not found as Class Name.");
 
-                $service = new $class($service);
-                if (!$service instanceof iCService)
-                    throw new \InvalidArgumentException($this->namespace.": Service '$key' not recognized.");
+                $instance = new $class;
+                if ($instance instanceof iCService)
+                    $instance->from($service);
 
-                $container->set($service);
+                if (!$instance instanceof iCService) {
+                    if (!array_key_exists('name', $service))
+                        throw new \InvalidArgumentException($this->namespace.": Service '$key' not recognized.");
+
+                    $name = $service['name'];
+                    unset($service['name']);
+
+                    $instance = new FactoryService([
+                        'name' => $name,
+                        'delegate' => function () use ($instance) {
+                            // Delegates will bind to service object as closure method
+                            return $instance;
+                        },
+                        'refresh_retrieve' => false,
+                    ]);
+                }
+
+                $container->set($instance);
             }
     }
 
