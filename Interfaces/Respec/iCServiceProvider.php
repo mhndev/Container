@@ -6,9 +6,9 @@ use Poirot\Container\Interfaces\iContainer;
 interface iCServiceProvider
 {
     /**
-     * Get Service Container
+     * Services Container
      *
      * @return iContainer
      */
-    function getServiceContainer();
+    function services();
 }

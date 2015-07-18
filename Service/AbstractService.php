@@ -152,7 +152,7 @@ abstract class AbstractService extends AbstractOptions
      *
      * @return iContainer
      */
-    function getServiceContainer()
+    function services()
     {
         return $this->sc;
     }
