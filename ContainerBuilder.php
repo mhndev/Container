@@ -6,7 +6,6 @@ use Poirot\Container\Interfaces\iCService;
 use Poirot\Container\Interfaces\iCServiceInitializer;
 use Poirot\Container\Service\FactoryService;
 use Poirot\Core\AbstractOptions;
-use Poirot\Core\Interfaces\iPoirotOptions;
 
 /**
 $container = new ContainerManager(new ContainerBuilder([
