@@ -182,16 +182,18 @@ class Container implements iContainer
         /* Create Service Instance */
         protected function __createFromService($inService)
         {
+            $this->__tmp_last_service = $inService->getName();
             set_error_handler([$this, 'handle_error'], E_ALL);
+
             // Initialize Service
             $this->initializer()->initialize($inService);
-
             // Retrieve Instance From Service
             $rInstance = $inService->createService();
-
             // Build Instance By Initializers:
             $this->initializer()->initialize($rInstance);
+
             restore_error_handler();
+            unset($this->__tmp_last_service);
 
             return $rInstance;
         }
@@ -199,8 +201,8 @@ class Container implements iContainer
         function handle_error($errno, $errstr, $errfile, $errline, $errcontext)
         {
             $errstr = sprintf(
-                'Error On File: "%s" at line %s, %s'
-                , $errfile, $errline, $errstr
+                'Error create "%s". ("%s" on file "%s" at line %s)'
+                , $this->__tmp_last_service, $errstr, $errfile, $errline
             );
             throw new \Exception($errstr, $errno);
         }
