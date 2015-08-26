@@ -418,27 +418,28 @@ class Container implements iContainer
      */
     function from($namespace)
     {
-        $namespace = rtrim($namespace, self::SEPARATOR);
-        $brkNamespace = explode(self::SEPARATOR, $namespace);
-
-        if (count($brkNamespace) == 1) {
-            // Single namespace found on container itself
+        if ($namespace === '')
+            # from recursion calls
+            return $this;
+        elseif (!strstr($namespace, self::SEPARATOR)) {
             if (!isset($this->__nestRight[$namespace]))
                 throw new \Exception(sprintf(
-                    'No nested container found for "%s".'
-                    , $namespace
+                    'Namespace "%s" not found on "%s".'
+                    , $namespace , get_class($this)
                 ));
 
             return $this->__nestRight[$namespace];
         }
 
-        $cNamespace = array_shift($brkNamespace);
-        $cContainer = $this;
+        $namespace    = rtrim($namespace, self::SEPARATOR);
+        $brkNamespace = explode(self::SEPARATOR, $namespace);
+
+        $cNamespace   = array_shift($brkNamespace);
+        $cContainer   = $this;
         if ($cNamespace === '') {
             // Goto Root Container
-            while ($cContainer->__nestLeft) {
+            while ($cContainer->__nestLeft)
                 $cContainer = $cContainer->__nestLeft;
-            }
         }
         else
             $cContainer = $this->from($cNamespace);
@@ -451,15 +452,14 @@ class Container implements iContainer
      *
      * @param string $namespace
      *
-     * @return Container
+     * @return Container|false
      */
     function with($namespace)
     {
         $namespace = $this->canonicalizeName($namespace);
 
-        if (!isset($this->__nestRight[$namespace])) {
-            $this->nest(new $this(), $namespace);
-        }
+        if (!isset($this->__nestRight[$namespace]))
+            return false;
 
         return $this->from($namespace);
     }
