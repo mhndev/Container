@@ -56,7 +56,7 @@ class Container implements iContainer
     protected $__nestRight = [];
 
     /**
-     * @var null Container That Nested To
+     * @var null|Container Container That Nested To
      */
     protected $__nestLeft = null;
 
@@ -186,16 +186,38 @@ class Container implements iContainer
             set_error_handler([$this, 'handle_error'], E_ALL);
 
             // Initialize Service
-            $this->initializer()->initialize($inService);
+            ## first initialize service creator factory class
+            $this->__initializeFromParents($inService);
+
             // Retrieve Instance From Service
             $rInstance = $inService->createService();
             // Build Instance By Initializers:
-            $this->initializer()->initialize($rInstance);
+            $this->__initializeFromParents($rInstance);
 
             restore_error_handler();
             unset($this->__tmp_last_service);
 
             return $rInstance;
+        }
+
+        function __initializeFromParents($inService)
+        {
+            $container   = $this;
+            $initializer = $this->initializer();
+
+            while($initializer) {
+                ## initialize with all parent namespaces:
+                $initializer->initialize($inService);
+
+                if ($container->__nestLeft) {
+                    $container   = $container->__nestLeft;
+                    $initializer = $container->initializer();
+                }
+                else
+                    $initializer = false;
+            }
+
+            return $inService;
         }
 
         function handle_error($errno, $errstr, $errfile, $errline, $errcontext)
