@@ -10,6 +10,17 @@ class ContainerServiceInitializer implements iCServiceInitializer
     /**
      * Add Callable Method
      *
+     * Methods will bind to service immediately:
+     * [code]
+     * function() {
+     *  if ($this instanceof Application\ModuleAsService)
+     *      // do something
+     * }
+     * [/code]
+     *
+     * !! and get service as first argument if service not object
+     * function($service)
+     *
      * @param callable $methodCallable  Callable
      * @param int      $priority        Priority
      *
@@ -56,7 +67,7 @@ class ContainerServiceInitializer implements iCServiceInitializer
     {
         foreach(clone $this->queue() as $initializer)
         {
-            // TODO: Exception Retrieval
+            // TODO: Handle Exception Retrieval
 
             if ($initializer instanceof \Closure) {
                 /** @var \Closure $initializer */
