@@ -148,7 +148,7 @@ class Container implements iContainer
         $inService = $this->services[$cName];
 
         # we want fresh shared for each service with new options
-        $hashed = md5($cName.serialize($invOpt));
+        $hashed = md5($cName.\Poirot\Core\flatten($invOpt));
 
         // Service From Cache:
         if (!$inService->getRefreshRetrieve()) {
