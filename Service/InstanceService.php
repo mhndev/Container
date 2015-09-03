@@ -8,6 +8,8 @@ class InstanceService extends AbstractService
     /**
      * Create Service
      *
+     * TODO invoke options as new instance constructor
+     *
      * @return mixed
      */
     function createService()
