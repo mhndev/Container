@@ -1,12 +1,20 @@
 <?php
 namespace Poirot\Container\Plugins;
 
+/*
+$invokablePlugins
+    ->options([
+        ## using to get service from container
+        'key' => 'value',
+    ])
+    ->callPlugin('arg1', 2);
+*/
 class InvokablePlugins
 {
-    /**
-     * @var AbstractPlugins
-     */
+    /** @var AbstractPlugins */
     protected $plugins;
+    /** @var array|null */
+    protected $options = null;
 
     /**
      * Construct
@@ -25,7 +33,7 @@ class InvokablePlugins
      * execute helpers.
      *
      * * If the helper does not define __invoke, it will be returned
-     * * If the helper does define __invoke, it will be called as a functor
+     * * If the helper does     define __invoke, it will be called as a functor
      *
      * @param  string $method
      * @param  array $argv
@@ -33,14 +41,33 @@ class InvokablePlugins
      */
     function __call($method, $argv)
     {
-        $options = [];
-        if (count($argv) == 1 && is_array($argv[0]))
-            $options = $argv[0];
+        $options = ($this->options) ? $this->options : [];
+        $plugin = $this->plugins->get($method, $options);
 
-        $plugin = $this->plugins->get($method, $options); // create service with arguments
         if (is_callable($plugin))
             return call_user_func_array($plugin, $argv);
 
+        $this->options = null;
         return $plugin;
+    }
+
+    /**
+     * Options to get service
+     *
+     * $this->action('/module/application')
+     *   ->options([
+     *      'key' => 'value',
+     *   ])
+     *   ->thenCall()
+     *
+     * @param array $options
+     *
+     * @return $this
+     */
+    function options(array $options)
+    {
+        $this->options = $options;
+
+        return $this;
     }
 }
