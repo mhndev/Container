@@ -7,6 +7,7 @@ use Poirot\Container\Interfaces\iCServiceInitializer;
 use Poirot\Container\Service\FactoryService;
 use Poirot\Container\Service\FunctorService;
 use Poirot\Core\AbstractOptions;
+use Poirot\Core\BuilderSetterTrait;
 use Poirot\Core\Interfaces\iPoirotOptions;
 
 /**
@@ -69,11 +70,10 @@ $container = new ContainerManager(new ContainerBuilder([
     ],
 ]));
  */
-
-// TODO using setupTrait instead of AbstractOptions
-class ContainerBuilder extends AbstractOptions
-    implements iContainerBuilder
+class ContainerBuilder implements iContainerBuilder
 {
+    use BuilderSetterTrait;
+
     protected $namespace;
 
     protected $services     = [];
@@ -85,10 +85,18 @@ class ContainerBuilder extends AbstractOptions
     protected $nested       = [];
 
     /**
-     * Configure container manager
+     * Construct
      *
-     * // TODO 'HeaderLine' => 'Poirot\\Http\\Header\\HeaderLine',
-     * // TODO Clean up codes to more readable
+     * @param array $options
+     */
+    function __construct(array $options = [])
+    {
+       if (!empty($options))
+           $this->setupFromArray($options, true);
+    }
+
+    /**
+     * Configure container manager
      *
      * @param Container $container
      *
