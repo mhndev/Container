@@ -84,6 +84,8 @@ class ContainerBuilder implements iContainerBuilder
 
     protected $nested       = [];
 
+    protected $interfaces   = [];
+
     /**
      * Construct
      *
@@ -111,12 +113,19 @@ class ContainerBuilder implements iContainerBuilder
                 , (is_object($container)) ? get_class($container) : gettype($container)
             ));
 
+        // ORDER IS MANDATORY
+
         // Namespace:
         if ($this->namespace)
             $container->setNamespace($this->namespace);
 
+        // Interfaces:
+        if ($this->interfaces)
+            foreach ($this->interfaces as $serviceName => $interface)
+                $container->setInterface($serviceName, $interface);
+
         // Initializer:
-        // it become first c`use maybe used on Services Creation
+        // it become c`use maybe used on Services Creation
         if (!empty($this->initializers))
             foreach ($this->initializers as $priority => $initializer) {
                 if ($initializer instanceof iCServiceInitializer)
@@ -158,7 +167,7 @@ class ContainerBuilder implements iContainerBuilder
         // Aliases:
         if (!empty($this->aliases))
             foreach($this->aliases as $alias => $srv)
-                $container->setAlias($alias, $srv);
+                $container->extend($alias, $srv);
 
         // Service:
         if (!empty($this->services))
@@ -222,11 +231,19 @@ class ContainerBuilder implements iContainerBuilder
     }
 
     /**
-     * @param mixed $namespace
+     * @param string $namespace
      */
     public function setNamespace($namespace)
     {
         $this->namespace = $namespace;
+    }
+
+    /**
+     * @param array $interfaces
+     */
+    public function setInterfaces($interfaces)
+    {
+        $this->interfaces = $interfaces;
     }
 
     /**
