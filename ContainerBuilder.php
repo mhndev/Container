@@ -8,6 +8,7 @@ use Poirot\Container\Service\FactoryService;
 use Poirot\Container\Service\FunctorService;
 use Poirot\Core\AbstractOptions;
 use Poirot\Core\BuilderSetterTrait;
+use Poirot\Core\Interfaces\iBuilderSetter;
 use Poirot\Core\Interfaces\iPoirotOptions;
 
 /**
@@ -70,7 +71,9 @@ $container = new ContainerManager(new ContainerBuilder([
     ],
 ]));
  */
-class ContainerBuilder implements iContainerBuilder
+class ContainerBuilder
+    implements iContainerBuilder
+    , iBuilderSetter
 {
     use BuilderSetterTrait;
 
