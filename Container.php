@@ -440,7 +440,6 @@ class Container implements iContainer
             ));
 
         # check for registered service with same alias name:
-        // TODO check if we change a registered service with new alias to other service
         $cAlias = $this->__canonicalizeName($newName);
         if ($this->has($newName))
             // Alias is present as a service
