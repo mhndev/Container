@@ -218,7 +218,7 @@ class ContainerBuilder
 
                     $instance = new FunctorService([
                         'name' => $name,
-                        'callback' => function () use ($instance) {
+                        'callable' => function () use ($instance) {
                             // Delegates will bind to service object as closure method
                             return $instance;
                         },

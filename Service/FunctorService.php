@@ -6,8 +6,8 @@ use Poirot\ArgsResolver\ANamedResolver;
 /*
  * $container->set(new FunctorService([
  *       'name'     => 'serviceName',
- *       'callback' => function($arg1, $arg2) {
- *           # callback function will bind to service object as closure method
+ *       'callable' => function($arg1, $arg2) {
+ *           # callable function will bind to service object as closure method
  *           # so you can access methods from FunctorService
  *           $sc = $this->getServiceContainer();
  *
@@ -20,12 +20,12 @@ use Poirot\ArgsResolver\ANamedResolver;
  * $container->get('serviceName', [$arg1Val, $arg2Val]);
  *
  * ...........................................................................
- * 'callback' => function($arg1, $arg2)  <---->  get('name', [12, 4])
- * 'callback' => function($arg1)         <---->  get('name', 'hello')
+ * 'callable' => function($arg1, $arg2)  <---->  get('name', [12, 4])
+ * 'callable' => function($arg1)         <---->  get('name', 'hello')
  *                                       <---->  get('name', ['hello'])
  * using arguments resolver:
  * @see ANamedResolver may change
- * 'callback' => function($arg1, int $x) <---->  get('name', [4, 'arg1' => '12'])
+ * 'callable' => function($arg1, int $x) <---->  get('name', [4, 'arg1' => '12'])
  *
  */
 
@@ -40,11 +40,32 @@ class FunctorService extends AbstractService
      */
     public $invoke_options;
 
-    /**
-     * @var \Closure
-     */
-    protected $callback;
+    /** @var callable */
+    protected $callable;
 
+
+    /**
+     * Construct
+     *
+     * also can used as:
+     * - new FunctorService([$this, 'method'], 'name');
+     * or setter set
+     * - new FunctorService([ 'callable' => [..] ..options])
+     *
+     * @param array|callable $options
+     * @param null|string    $name
+     */
+    function __construct($options = null, $name = null)
+    {
+        if (is_callable($name)) {
+            ## __construct('name', [$this, 'method'])
+            $this->setCallable($name);
+            $this->setName($options);
+        }
+        else
+            ## ['callable' => '..', ..]
+            $this->from($options);
+    }
 
     /**
      * Set createService Delegate
@@ -57,9 +78,9 @@ class FunctorService extends AbstractService
      *
      * @return $this
      */
-    function setCallback(callable $func)
+    function setCallable(callable $func)
     {
-        $this->callback = $func;
+        $this->callable = $func;
 
         return $this;
     }
@@ -71,9 +92,9 @@ class FunctorService extends AbstractService
      */
     function createService()
     {
-        $callback = $this->callback;
-        if ($callback instanceof \Closure)
-            $callback = $callback->bindTo($this);
+        $callable = $this->callable;
+        if ($callable instanceof \Closure)
+            $callable = $callable->bindTo($this);
 
         if (!is_array($this->invoke_options))
             $this->invoke_options = [$this->invoke_options];
@@ -86,17 +107,17 @@ class FunctorService extends AbstractService
             ## Resolve To Callback Arguments From Invoke Options
             try {
                 $arguments = $this->__getArgsResolver()
-                    ->bind($callback)
+                    ->bind($callable)
                     ->resolve($this->invoke_options)
                         ->toArray();
             } catch(\Exception $e) { }
         }
 
-        return call_user_func_array($callback, $arguments);
+        return call_user_func_array($callable, $arguments);
     }
 
-    protected function __getArgsResolver()
-    {
-        return new ANamedResolver;
-    }
+        protected function __getArgsResolver()
+        {
+            return new ANamedResolver;
+        }
 }

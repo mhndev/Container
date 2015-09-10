@@ -159,8 +159,8 @@ we can build any container service with some options
 ```php
 $container->set(new FunctorService([
    'name'     => 'service_name',
-   'callback' => function($arg1, $arg2) {
-       # callback function will bind to service object as closure method
+   'callable' => function($arg1, $arg2) {
+       # callable function will bind to service object as closure method
        # so you can access methods from FunctorService
        $sc = $this->getServiceContainer();
 
