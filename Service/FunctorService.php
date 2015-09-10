@@ -1,9 +1,11 @@
 <?php
 namespace Poirot\Container\Service;
 
-/**
+use Poirot\ArgsResolver\ANamedResolver;
+
+/*
  * $container->set(new FunctorService([
- *       'name'     => 'service_name',
+ *       'name'     => 'serviceName',
  *       'callback' => function($arg1, $arg2) {
  *           # callback function will bind to service object as closure method
  *           # so you can access methods from FunctorService
@@ -15,9 +17,18 @@ namespace Poirot\Container\Service;
  *       'allow_override'   => false
  * ]));
  *
- * $container->new('service_name', [$arg1Val, $arg2Val]);
+ * $container->get('serviceName', [$arg1Val, $arg2Val]);
+ *
+ * ...........................................................................
+ * 'callback' => function($arg1, $arg2)  <---->  get('name', [12, 4])
+ * 'callback' => function($arg1)         <---->  get('name', 'hello')
+ *                                       <---->  get('name', ['hello'])
+ * using arguments resolver:
+ * @see ANamedResolver may change
+ * 'callback' => function($arg1, int $x) <---->  get('name', [4, 'arg1' => '12'])
  *
  */
+
 class FunctorService extends AbstractService
 {
     /**
@@ -34,13 +45,6 @@ class FunctorService extends AbstractService
      */
     protected $callback;
 
-    /**
-     * Indicate to retrieve refresh instance
-     * on creating service
-     *
-     * @var bool
-     */
-    protected $refreshInstance = true;
 
     /**
      * Set createService Delegate
@@ -53,10 +57,9 @@ class FunctorService extends AbstractService
      *
      * @return $this
      */
-    function setCallback(\Closure $func)
+    function setCallback(callable $func)
     {
-        $delegate = $func->bindTo($this);
-        $this->callback = $delegate;
+        $this->callback = $func;
 
         return $this;
     }
@@ -68,8 +71,32 @@ class FunctorService extends AbstractService
      */
     function createService()
     {
-        $func = $this->callback;
+        $callback = $this->callback;
+        if ($callback instanceof \Closure)
+            $callback = $callback->bindTo($this);
 
-        return call_user_func_array($func, $this->invoke_options);
+        if (!is_array($this->invoke_options))
+            $this->invoke_options = [$this->invoke_options];
+
+        // ...
+
+        $arguments = $this->invoke_options;
+
+        if (class_exists('\Poirot\ArgsResolver\ANamedResolver\ANamedResolver')) {
+            ## Resolve To Callback Arguments From Invoke Options
+            try {
+                $arguments = $this->__getArgsResolver()
+                    ->bind($callback)
+                    ->resolve($this->invoke_options)
+                        ->toArray();
+            } catch(\Exception $e) { }
+        }
+
+        return call_user_func_array($callback, $arguments);
+    }
+
+    protected function __getArgsResolver()
+    {
+        return new ANamedResolver;
     }
 }
