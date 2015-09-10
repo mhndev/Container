@@ -193,8 +193,10 @@ class Container implements iContainer
      *   service on first request
      * - if service not exists ::fresh it
      *
+     * note: using much argument $invOpt it's not recommended.
+     *
      * @param string $serviceName Service name
-     * @param array  $invOpt      Invoke Options
+     * @param mixed  $invOpt      Invoke Options
      *
      * @throws \Exception
      * @return mixed
@@ -252,7 +254,7 @@ class Container implements iContainer
      * Retrieve a fresh instance of service
      *
      * @param string $serviceName Service name
-     * @param array $invOpt Invoke Options
+     * @param mixed  $invOpt Invoke Options
      *
      * @throws \Exception
      * @return mixed
@@ -292,6 +294,8 @@ class Container implements iContainer
         # Refresh Service:
         try
         {
+            ## store invokeOptions used by related initializer
+            /** @see Container::initializer */
             $this->__invokeOptions = $invOpt;
             $instance = $this->__createFromService($inService);
             $this->__invokeOptions = null;
@@ -313,7 +317,10 @@ class Container implements iContainer
         {
             ## handle errors while create service
             $this->__tmp_last_service = $inService->getName();
-            set_error_handler([$this, 'handle_error'], E_ALL);
+            set_error_handler(
+                [$this, 'handle_error']
+                , E_ALL ^ E_DEPRECATED ^ E_WARNING ^ E_USER_WARNING
+            );
 
                 // Initialize Service
                 ## first initialize service creator factory class
@@ -356,7 +363,7 @@ class Container implements iContainer
         function handle_error($errno, $errstr, $errfile, $errline, $errcontext)
         {
             $errstr = sprintf(
-                'Error create "%s". ("%s" on file "%s" at line %s)'
+                'Error create (%s). ("%s" on file "%s" at line %s)'
                 , $this->__tmp_last_service, $errstr, $errfile, $errline
             );
             throw new \Exception($errstr, $errno);
