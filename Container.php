@@ -222,12 +222,7 @@ class Container implements iContainer
         $instance = $this->__shared[$hashed];
 
         # initialize retrieved service to match with defined implementation interface
-        if ($this->__validate_interface($serviceName, $instance) === false)
-            throw new \Exception(sprintf(
-                'Service with name (%s) must implement (%s); given: %s'
-                , $serviceName, $this->getInterfaceOf($serviceName), \Poirot\Core\flatten($instance)
-            ));
-
+        $this->__validate_interface($serviceName, $instance);
         return $instance;
     }
 
@@ -235,19 +230,24 @@ class Container implements iContainer
      * validate interface against attained service instance
      * @param string $serviceName
      * @param object|mixed $instance
-     * @return bool
+     * @throws \Exception
      */
     protected function __validate_interface($serviceName, $instance)
     {
         $definedInterface = $this->getInterfaceOf($serviceName);
         if ($definedInterface === false)
-            ## called expression know to do nothing
-            return VOID;
+            ## we have not defined interface, nothing to do
+            return;
 
+        $flag = false;
         if (is_object($instance))
-            return $instance instanceof $definedInterface;
+            $flag = $instance instanceof $definedInterface;
 
-        return false;
+        if ($flag == false)
+            throw new \Exception(sprintf(
+                'Service with name (%s) must implement (%s); given: %s'
+                , $serviceName, $this->getInterfaceOf($serviceName), \Poirot\Core\flatten($instance)
+            ));
     }
 
     /**
@@ -305,6 +305,8 @@ class Container implements iContainer
             ), $e->getCode(), $e);
         }
 
+        # initialize retrieved service to match with defined implementation interface
+        $this->__validate_interface($orgName, $instance);
         return $instance;
     }
 
