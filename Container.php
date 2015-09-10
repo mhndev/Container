@@ -208,9 +208,14 @@ class Container implements iContainer
         $hashed = md5($cName.\Poirot\Core\flatten($invOpt));
 
         ## Service From Cache:
-        if (!isset($this->__shared[$hashed]))
+        if (!isset($this->__shared[$hashed])) {
             ## make new fresh instance if service not exists
-            return $this->fresh($serviceName, $invOpt);
+            $instance = $this->fresh($serviceName, $invOpt);
+            $this->__shared[$hashed] = $instance;
+            ## recursion call to retrieve instance
+            return $this->get($serviceName, $invOpt);
+        }
+
 
         // ...
 
@@ -260,7 +265,7 @@ class Container implements iContainer
         $serviceName = $this->getExtendOf($serviceName);
 
         # check if we have alias to nested service ...................................................\
-        if (substr_count(ltrim($serviceName, '/'), '/')) {
+        if (substr_count($serviceName, '/', 1)) {
             // shared alias for nested container
             /* @see Container::extend */
 
@@ -286,9 +291,6 @@ class Container implements iContainer
         /** @var iCService $inService */
         $inService = $this->services[$cName];
 
-        ## hash with options, so we get unique service with different options V
-        $hashed = md5($cName.\Poirot\Core\flatten($invOpt));
-
         # Refresh Service:
         try
         {
@@ -303,26 +305,24 @@ class Container implements iContainer
             ), $e->getCode(), $e);
         }
 
-        ## Store Latest Instance, using by @see Container::get
-        $this->__shared[$hashed] = $instance;
-
-        return $this->get($orgName, $invOpt);
+        return $instance;
     }
 
         /* Create Service Instance */
         protected function __createFromService($inService)
         {
+            ## handle errors while create service
             $this->__tmp_last_service = $inService->getName();
             set_error_handler([$this, 'handle_error'], E_ALL);
 
-            // Initialize Service
-            ## first initialize service creator factory class
-            $this->__initializeFromParents($inService);
+                // Initialize Service
+                ## first initialize service creator factory class
+                $this->__initializeFromParents($inService);
 
-            // Retrieve Instance From Service
-            $rInstance = $inService->createService();
-            // Build Instance By Initializers:
-            $this->__initializeFromParents($rInstance);
+                // Retrieve Instance From Service
+                $rInstance = $inService->createService();
+                // Build Instance By Initializers:
+                $this->__initializeFromParents($rInstance);
 
             restore_error_handler();
             unset($this->__tmp_last_service);
@@ -330,6 +330,9 @@ class Container implements iContainer
             return $rInstance;
         }
 
+        /**
+         * Initialize object with all parent nested initializers
+         */
         function __initializeFromParents($inService)
         {
             $container   = $this;
@@ -465,7 +468,7 @@ class Container implements iContainer
             $cAlias = $this->__canonicalizeName($serviceName);
             $serviceName  = $this->aliases[$cAlias];
             ## check if we have alias to nested service
-            if (substr_count(ltrim($serviceName, '/'), '/'))
+            if (substr_count($serviceName, '/', 1))
                 // we have an aliases that used as
                 // share services between nested services
                 // in form of "/filesystem/system/folder"
