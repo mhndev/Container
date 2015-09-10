@@ -1,8 +1,6 @@
 <?php
 namespace Poirot\Container;
 
-use Poirot\Container\Exception\ContainerCreateServiceException;
-use Poirot\Container\Exception\ContainerServNotFoundException;
 use Poirot\Container\Interfaces\iContainer;
 use Poirot\Container\Interfaces\iContainerBuilder;
 use Poirot\Container\Interfaces\iCService;

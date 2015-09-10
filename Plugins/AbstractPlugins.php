@@ -19,15 +19,32 @@ abstract class AbstractPlugins extends Container
     /**
      * Retrieve a registered instance
      *
-     * @param string $service Service name
-     * @param array  $invOpt  Invoke Options
+     * @param string $serviceName Service name
+     * @param array  $invOpt      Invoke Options
      *
      * @throws ContainerInvalidPluginException
      * @return mixed
      */
-    function get($service, $invOpt = [])
+    function get($serviceName, $invOpt = [])
     {
-        $return = parent::get($service, $invOpt);
+        $return = parent::get($serviceName, $invOpt);
+        $this->validatePlugin($return);
+
+        return $return;
+    }
+
+    /**
+     * Retrieve a fresh instance of service
+     *
+     * @param string $serviceName Service name
+     * @param array $invOpt Invoke Options
+     *
+     * @throws \Exception
+     * @return mixed
+     */
+    function fresh($serviceName, $invOpt = [])
+    {
+        $return = parent::fresh($serviceName, $invOpt);
         $this->validatePlugin($return);
 
         return $return;
