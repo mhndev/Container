@@ -7,22 +7,37 @@ use Poirot\Container\Exception\ContainerServNotFoundException;
 interface iContainer
 {
     /**
-     * Retrieve a registered instance
+     * Retrieve a registered service
      *
-     * @param string $service Service name
-     * @param array  $invOpt  Invoke Options
+     * - don't refresh retrieve for services, store-
+     *   service on first request
+     * - if service not exists ::fresh it
+     *
+     * @param string $serviceName Service name
+     * @param array  $invOpt      Invoke Options
      *
      * @throws ContainerCreateServiceException|ContainerServNotFoundException
-     * @return object
+     * @return mixed
      */
-    function get($service, $invOpt = []);
+    function get($serviceName, $invOpt = []);
+
+    /**
+     * Retrieve a fresh instance of service
+     *
+     * @param string $serviceName Service name
+     * @param array  $invOpt      Invoke Options
+     *
+     * @throws ContainerCreateServiceException|ContainerServNotFoundException
+     * @return mixed
+     */
+    function fresh($serviceName, $invOpt = []);
 
     /**
      * Check for a registered instance
      *
-     * @param string $service Service Name
+     * @param string $serviceName Service Name
      *
      * @return boolean
      */
-    function has($service);
+    function has($serviceName);
 }

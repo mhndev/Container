@@ -12,11 +12,10 @@ namespace Poirot\Container\Service;
  *           # here we return service result
  *           return $arg1.' '.$arg2;
  *       },
- *       'refresh_retrieve' => true,
  *       'allow_override'   => false
  * ]));
  *
- * $container->get('service_name', [$arg1Val, $arg2Val]);
+ * $container->new('service_name', [$arg1Val, $arg2Val]);
  *
  */
 class FunctorService extends AbstractService
@@ -47,7 +46,7 @@ class FunctorService extends AbstractService
      * Set createService Delegate
      *
      * - it will bind to service object as closure method
-     *   so, you can access to methods from FactoryService
+     *   so, you can access to methods from FunctorService
      *   from function() { $this->getServiceContainer() }
      *
      * @param callable $func

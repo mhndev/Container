@@ -4,7 +4,6 @@ namespace Poirot\Container;
 use Poirot\Container\Interfaces\iContainerBuilder;
 use Poirot\Container\Interfaces\iCService;
 use Poirot\Container\Interfaces\iCServiceInitializer;
-use Poirot\Container\Service\FactoryService;
 use Poirot\Container\Service\FunctorService;
 use Poirot\Core\AbstractOptions;
 use Poirot\Core\BuilderSetterTrait;
@@ -21,7 +20,6 @@ $container = new ContainerManager(new ContainerBuilder([
                 $sc = $this->getServiceContainer();
                 return $sc->from('files')->get('folder');
             },
-            'refresh_retrieve' => false,
             'allow_override' => false
         ]),
  *
@@ -38,7 +36,6 @@ $container = new ContainerManager(new ContainerBuilder([
                 $sc = $this->getServiceContainer();
                 return $sc->from('files')->get('folder');
             },
-            'refresh_retrieve' => false,
             'allow_override' => false
         ],
 
@@ -108,7 +105,7 @@ class ContainerBuilder
      * @throws \Exception
      * @return void
      */
-    function buildContainer(/*ContainerManager*/ $container)
+    function buildContainer(/*Container*/ $container)
     {
         if (!$container instanceof Container)
             throw new \Exception(sprintf(
@@ -225,13 +222,15 @@ class ContainerBuilder
                             // Delegates will bind to service object as closure method
                             return $instance;
                         },
-                        'refresh_retrieve' => false,
                     ]);
                 }
 
                 $container->set($instance);
             }
     }
+
+
+    // Setter Methods
 
     /**
      * @param string $namespace

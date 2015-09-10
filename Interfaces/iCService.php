@@ -29,24 +29,6 @@ interface iCService extends iPoirotOptions
     function createService();
 
     /**
-     * Set flag indicating whether service refreshed
-     * on new instance request
-     *
-     * @param boolean $flag
-     *
-     * @return $this
-     */
-    function setRefreshRetrieve($flag);
-
-    /**
-     * Get flag on indicating whether service refreshed
-     * on new instance request?
-     *
-     * @return boolean
-     */
-    function getRefreshRetrieve();
-
-    /**
      * Set Allow Override By Service
      *
      * @param boolean $allow Flag

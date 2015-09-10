@@ -80,19 +80,35 @@ class Container implements iContainer
      */
     function __construct(iContainerBuilder $cBuilder = null)
     {
-        if ($cBuilder)
+        if ($cBuilder !== null)
             $cBuilder->buildContainer($this);
     }
 
+    /**
+     * Set Container Namespace
+     *
+     * @param string $namespace
+     *
+     * @throws \Exception
+     * @return $this
+     */
     function setNamespace($namespace)
     {
         $this->namespace = $this->__canonicalizeName($namespace);
+
+        return $this;
     }
 
+    /**
+     * Get Container Namespace
+     *
+     * @return string
+     */
     function getNamespace()
     {
         return $this->namespace;
     }
+
 
     // Service Manager:
 
@@ -123,6 +139,7 @@ class Container implements iContainer
                 , \Poirot\Core\flatten($interface)
             ));
 
+        $serviceName = $this->__canonicalizeName($serviceName);
         $this->interfaces[$serviceName] = $interface;
 
         return $this;
@@ -137,21 +154,13 @@ class Container implements iContainer
      */
     function getInterfaceOf($serviceName)
     {
+        $serviceName = $this->__canonicalizeName($serviceName);
+
         return (
             isset($this->interfaces[$serviceName])
                 ? $this->interfaces[$serviceName]
                 : false
         );
-    }
-
-    /**
-     * Get Interfaces
-     *
-     * @return array
-     */
-    function getInterfaces()
-    {
-        return $this->interfaces;
     }
 
     /**
@@ -170,7 +179,7 @@ class Container implements iContainer
         if ($this->has($name))
             if (!$this->services[$cName]->getAllowOverride())
                 throw new \Exception(sprintf(
-                    'A service by the name or alias "%s" already exists and cannot be overridden; please use an alternate name',
+                    'A service by the name or alias (%s) already exists and cannot be overridden; please use an alternate name',
                     $name
                 ));
 
@@ -182,30 +191,85 @@ class Container implements iContainer
     /**
      * Retrieve a registered service
      *
+     * - don't refresh retrieve for services, store-
+     *   service on first request
+     * - if service not exists ::fresh it
+     *
      * @param string $serviceName Service name
-     * @param array $invOpt Invoke Options
+     * @param array  $invOpt      Invoke Options
      *
      * @throws \Exception
      * @return mixed
      */
     function get($serviceName, $invOpt = [])
     {
-        // initialize retrieved service to match with defined implementation interface ----------------\
-        if ($f_initialize_interface = $this->getInterfaceOf($serviceName))
-            $f_initialize_interface = function($srvInstance) use ($f_initialize_interface) {
-                if (is_object($srvInstance))
-                    return $srvInstance instanceof $f_initialize_interface;
+        $cName  = $this->__canonicalizeName($serviceName);
+        ## hash with options, so we get unique service with different options V
+        $hashed = md5($cName.\Poirot\Core\flatten($invOpt));
 
-                return false;
-            };
-        // --------------------------------------------------------------------------------------------
+        ## Service From Cache:
+        if (!isset($this->__shared[$hashed]))
+            ## make new fresh instance if service not exists
+            return $this->fresh($serviceName, $invOpt);
 
+        // ...
+
+        $instance = $this->__shared[$hashed];
+
+        # initialize retrieved service to match with defined implementation interface
+        if ($this->__validate_interface($serviceName, $instance) === false)
+            throw new \Exception(sprintf(
+                'Service with name (%s) must implement (%s); given: %s'
+                , $serviceName, $this->getInterfaceOf($serviceName), \Poirot\Core\flatten($instance)
+            ));
+
+        return $instance;
+    }
+
+    /**
+     * validate interface against attained service instance
+     * @param string $serviceName
+     * @param object|mixed $instance
+     * @return bool
+     */
+    protected function __validate_interface($serviceName, $instance)
+    {
+        $definedInterface = $this->getInterfaceOf($serviceName);
+        if ($definedInterface === false)
+            ## called expression know to do nothing
+            return VOID;
+
+        if (is_object($instance))
+            return $instance instanceof $definedInterface;
+
+        return false;
+    }
+
+    /**
+     * Retrieve a fresh instance of service
+     *
+     * @param string $serviceName Service name
+     * @param array $invOpt Invoke Options
+     *
+     * @throws \Exception
+     * @return mixed
+     */
+    function fresh($serviceName, $invOpt = [])
+    {
         $orgName     = $serviceName;
         $serviceName = $this->getExtendOf($serviceName);
-        if (is_array($serviceName))
+
+        # check if we have alias to nested service ...................................................\
+        if (substr_count(ltrim($serviceName, '/'), '/')) {
             // shared alias for nested container
-            /* @see extend */
-            return $this->from($serviceName[0])->get($serviceName[1]);
+            /* @see Container::extend */
+
+            $xService    = explode('/', $serviceName);
+            $serviceName = array_pop($xService);
+
+            return $this->from(implode('/', $xService))->get($serviceName);
+        }
+        # ...........................................................................................
 
         if (!$this->has($serviceName))
             throw new Exception\ContainerServNotFoundException(sprintf(
@@ -215,50 +279,34 @@ class Container implements iContainer
                 $orgName
             ));
 
+
+        # attain service instance ...................................................................\
         $cName = $this->__canonicalizeName($serviceName);
+
         /** @var iCService $inService */
         $inService = $this->services[$cName];
 
-        ### hash with options, so we get unique service with different options
+        ## hash with options, so we get unique service with different options V
         $hashed = md5($cName.\Poirot\Core\flatten($invOpt));
-
-        ## Service From Cache:
-        if (!$inService->getRefreshRetrieve()) {
-            // Use Retrieved Instance Before
-            if (isset($this->__shared[$hashed]))
-                return $this->__shared[$hashed];
-        }
 
         # Refresh Service:
         try
         {
             $this->__invokeOptions = $invOpt;
-
-                $instance = $this->__createFromService($inService);
-
+            $instance = $this->__createFromService($inService);
             $this->__invokeOptions = null;
         }
         catch(\Exception $e) {
             throw new Exception\ContainerCreateServiceException(sprintf(
-                'An exception was raised while creating "%s"; no instance returned'
+                'An exception was raised while creating (%s); no instance returned.'
                 , $orgName
             ), $e->getCode(), $e);
         }
 
-        // initialize retrieved service to match with defined implementation interface ----------------\
-            if ($f_initialize_interface) {
-                if ($f_initialize_interface($instance) === false)
-                    throw new \Exception(sprintf(
-                        'Service with name (%s) must implement (%s); given: %s'
-                        , $orgName, $this->getInterfaceOf($orgName), \Poirot\Core\flatten($instance)
-                    ));
-            }
-        // --------------------------------------------------------------------------------------------
-
-        ## Store Latest Instance So Work With RefreshRetrieve Service Option
+        ## Store Latest Instance, using by @see Container::get
         $this->__shared[$hashed] = $instance;
 
-        return $this->__shared[$hashed];
+        return $this->get($orgName, $invOpt);
     }
 
         /* Create Service Instance */
@@ -349,13 +397,13 @@ class Container implements iContainer
     /**
      * Check for a registered instance
      *
-     * @param string $name Service Name
+     * @param string $serviceName Service Name
      *
      * @return boolean
      */
-    function has($name)
+    function has($serviceName)
     {
-        $cName = $this->__canonicalizeName($name);
+        $cName = $this->__canonicalizeName($serviceName);
 
         return isset($this->services[$cName]);
     }
@@ -363,9 +411,9 @@ class Container implements iContainer
     /**
      * Set Alias Name For Registered Service
      *
-     * - Alias point can be in form of ['/filesystem/system', 'folder'],
-     *   that mean, alias name is extend from /filesystem/system/
-     *   for folder service
+     * - Alias point can be in form of "/filesystem/system/folder"
+     *   that mean, alias name is extend from "/filesystem/system/"
+     *   for "folder" service
      * - Aliases Can be set even if service not found
      *   or service added later
      *
@@ -386,6 +434,8 @@ class Container implements iContainer
                 , $newName
             ));
 
+        # check for registered service with same alias name:
+        // TODO check if we change a registered service with new alias to other service
         $cAlias = $this->__canonicalizeName($newName);
         if ($this->has($newName))
             // Alias is present as a service
@@ -414,12 +464,13 @@ class Container implements iContainer
         while ($this->__hasAlias($serviceName)) {
             $cAlias = $this->__canonicalizeName($serviceName);
             $serviceName  = $this->aliases[$cAlias];
-            if (is_array($serviceName))
+            ## check if we have alias to nested service
+            if (substr_count(ltrim($serviceName, '/'), '/'))
                 // we have an aliases that used as
                 // share services between nested services
-                // in form of 'sysdir' => ['/filesystem/system', 'folder'],
-                // that mean, sysdir is alias from /filesystem/system/ for folder service
-                break;
+                // in form of "/filesystem/system/folder"
+                // that mean, service is alias from "/filesystem/system/" for "folder" service
+                break; ## so break iteration
         }
 
         return $serviceName;

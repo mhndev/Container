@@ -86,32 +86,6 @@ abstract class AbstractService extends AbstractOptions
     }
 
     /**
-     * Set flag indicating whether service refreshed
-     * on new instance request
-     *
-     * @param boolean $flag
-     *
-     * @return $this
-     */
-    function setRefreshRetrieve($flag)
-    {
-        $this->refreshInstance = (boolean) $flag;
-
-        return $this;
-    }
-
-    /**
-     * Get flag on indicating whether service refreshed
-     * on new instance request?
-     *
-     * @return boolean
-     */
-    function getRefreshRetrieve()
-    {
-        return $this->refreshInstance;
-    }
-
-    /**
      * Set Allow Override By Service
      *
      * @param boolean $allow Flag
@@ -134,6 +108,7 @@ abstract class AbstractService extends AbstractOptions
     {
         return $this->allowOverride;
     }
+
 
     // Implement iCServiceAware:
 

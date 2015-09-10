@@ -27,12 +27,11 @@ $container->set(new FactoryService(['name' => 'sysdir',
         $sc = $this->getServiceContainer();
         return $sc->from('files')->get('folder');
     },
-    'refresh_retrieve' => false,
     'allow_override' => false]
 ));
 
 $nest = new ContainerManager('main');
-$nest->set(new defaultService(['name' => 'directory', 'refresh_retrieve' => false, 'allow_override' => true]));
+$nest->set(new defaultService(['name' => 'directory', 'allow_override' => true]));
 $nest->setAlias('dir', 'directory');
 $nest->setAlias('folder', 'dir');
 $nest->setAlias('boom', 'boomService');
@@ -57,7 +56,6 @@ $container = new ContainerManager(new ContainerBuilder([
                 $sc = $this->getServiceContainer();
                 return $sc->from('files')->get('folder');
             },
-            'refresh_retrieve' => false,
             'allow_override' => false
         ],
     ],
@@ -66,7 +64,6 @@ $container = new ContainerManager(new ContainerBuilder([
             'namespace' => 'files',
             'services'  => [
                 new defaultService(['name' => 'directory'
-                    , 'refresh_retrieve' => false
                     , 'allow_override' => true
                 ])
             ],
@@ -96,7 +93,6 @@ $container = new ContainerManager(new ContainerBuilder([
                 $sc = $this->getServiceContainer();
                 return $sc->from('/filesystem/system')->get('folder'); // <<<<<=====----
             },
-            'refresh_retrieve' => false,
             'allow_override' => false
         ],
     ],
@@ -107,7 +103,6 @@ $container = new ContainerManager(new ContainerBuilder([
                 'system' => [
                     'services'  => [
                         new defaultService(['name' => 'directory'
-                            , 'refresh_retrieve' => false
                             , 'allow_override' => true
                         ])
                     ],
@@ -137,7 +132,6 @@ $container = new ContainerManager(new ContainerBuilder([
                 'system' => [
                     'services'  => [
                         new defaultService(['name' => 'directory' // <<<===--- share this
-                            , 'refresh_retrieve' => false
                             , 'allow_override' => true
                         ])
                     ],
@@ -173,9 +167,8 @@ $container->set(new FunctorService([
        # here we return service result
        return $arg1.' '.$arg2;
    },
-   'refresh_retrieve' => true,
    'allow_override'   => false
 ]));
 
-$container->get('service_name', [$arg1Val, $arg2Val]);
+$container->new('service_name', [$arg1Val, $arg2Val]);
 ```
