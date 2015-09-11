@@ -208,10 +208,11 @@ class Container implements iContainer
         $hashed = md5($cName.\Poirot\Core\flatten($invOpt));
 
         ## Service From Cache:
-        if (!isset($this->__shared[$hashed])) {
+        if (!array_key_exists($hashed, $this->__shared)) { ### maybe null as result
             ## make new fresh instance if service not exists
             $instance = $this->fresh($serviceName, $invOpt);
             $this->__shared[$hashed] = $instance;
+
             ## recursion call to retrieve instance
             return $this->get($serviceName, $invOpt);
         }
@@ -319,7 +320,7 @@ class Container implements iContainer
             $this->__tmp_last_service = $inService->getName();
             set_error_handler(
                 [$this, 'handle_error']
-                , E_ALL ^ E_DEPRECATED ^ E_WARNING ^ E_USER_WARNING
+                , E_ALL ^ (E_DEPRECATED ^ E_WARNING ^ E_USER_WARNING ^ E_NOTICE)
             );
 
                 // Initialize Service
@@ -339,14 +340,16 @@ class Container implements iContainer
 
         /**
          * Initialize object with all parent nested initializers
+         * @param mixed $inService instance created with service
+         * @return mixed
          */
         function __initializeFromParents($inService)
         {
             $container   = $this;
             $initializer = $this->initializer();
 
+            # initialize with all parent namespaces:
             while($initializer) {
-                ## initialize with all parent namespaces:
                 $initializer->initialize($inService);
 
                 if ($container->__nestLeft) {

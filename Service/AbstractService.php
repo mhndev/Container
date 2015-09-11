@@ -33,14 +33,6 @@ abstract class AbstractService extends AbstractOptions
     protected $name;
 
     /**
-     * Indicate to retrieve refresh instance
-     * on creating service
-     *
-     * @var bool
-     */
-    protected $refreshInstance = false;
-
-    /**
      * Indicate to allow overriding service
      * with another service
      *
