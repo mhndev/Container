@@ -19,7 +19,7 @@ class defaultService extends AbstractService
 }
 
 
-$container = new ContainerManager('main');
+$container = new Container('main');
 $container->set(new FactoryService(['name' => 'sysdir',
     'delegate' => function() {
         // Delegates will bind to service object as closure method
@@ -30,7 +30,7 @@ $container->set(new FactoryService(['name' => 'sysdir',
     'allow_override' => false]
 ));
 
-$nest = new ContainerManager('main');
+$nest = new Container('main');
 $nest->set(new defaultService(['name' => 'directory', 'allow_override' => true]));
 $nest->setAlias('dir', 'directory');
 $nest->setAlias('folder', 'dir');
@@ -45,7 +45,7 @@ $dir = $container->get('sysdir')
 ## Or From Builder
 
 ```php
-$container = new ContainerManager(new ContainerBuilder([
+$container = new Container(new ContainerBuilder([
     'namespace' => 'main',
     'services'  => [
         'FactoryService' => [ // Prefixed with Container namespace
@@ -82,7 +82,7 @@ $dir = $container->get('sysdir')
 ## Nested Hierarchy
 
 ```php
-$container = new ContainerManager(new ContainerBuilder([
+$container = new Container(new ContainerBuilder([
     'namespace' => 'main',
     'services'  => [
         'FactoryService' => [ // Prefixed with Container namespace
@@ -120,7 +120,7 @@ $container = new ContainerManager(new ContainerBuilder([
 ## Shared Service as Alias
 
 ```php
-$container = new ContainerManager(new ContainerBuilder([
+$container = new Container(new ContainerBuilder([
     'namespace' => 'main',
     'aliases' => [
         'sysdir' => ['/filesystem/system', 'folder'],  // <<<====---- Shared Alias
@@ -170,5 +170,35 @@ $container->set(new FunctorService([
    'allow_override'   => false
 ]));
 
-$container->new('service_name', [$arg1Val, $arg2Val]);
+$container->fresh('service_name', [$arg1Val, $arg2Val]);
+```
+
+## Understand Refresh Service Retrieve
+
+```php
+$services->set(new FunctorService('dynamicUri', function($arg = null) {
+    return sprintf(
+        '%s Service Requested. <br/>'
+        , date('H:i:s'), $arg
+    );
+}));
+
+echo $services->get('dynamicUri');
+sleep(2);
+echo $services->get('dynamicUri');
+sleep(2);
+echo $services->fresh('dynamicUri');
+sleep(2);
+echo $services->get('dynamicUri');
+sleep(2);
+echo $services->get('dynamicUri', ['arg' => 'this is new request because options changed.']);
+```
+
+result:
+```
+12:19:49 Service Requested. 
+12:19:49 Service Requested. 
+12:19:53 Service Requested. // fresh request
+12:19:49 Service Requested. 
+12:19:57 Service Requested. // with new options consume as fresh
 ```
