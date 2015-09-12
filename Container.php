@@ -345,20 +345,17 @@ class Container implements iContainer
          */
         function __initializeFromParents($inService)
         {
-            $container   = $this;
-            $initializer = $this->initializer();
-
-            # initialize with all parent namespaces:
-            while($initializer) {
-                $initializer->initialize($inService);
-
-                if ($container->__nestLeft) {
-                    $container   = $container->__nestLeft;
-                    $initializer = $container->initializer();
-                }
-                else
-                    $initializer = false;
+            # initialize with all parent namespaces, from root parent to current last
+            $container    = $this;
+            $initializers = [];
+            while($container->__nestLeft) {
+                $container = $container->__nestLeft;
+                array_push($initializers, $container->initializer());
             }
+
+            array_push($initializers, $this->initializer());
+            foreach($initializers as $initializer)
+                $initializer->initialize($inService);
 
             return $inService;
         }
