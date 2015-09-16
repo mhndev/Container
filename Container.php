@@ -499,6 +499,104 @@ class Container implements iContainer
         return isset($this->aliases[$cAlias]);
     }
 
+
+    // Nested Containers:
+
+    /**
+     * Nest A Copy Of Container Within This Container
+     *
+     * @param Container   $container
+     * @param string|null $namespace Container Namespace
+     *
+     * @return $this
+     */
+    function nest(Container $container, $namespace = null)
+    {
+        // Use Container Namespace if not provided as argument
+        ($namespace !== null) ?: $namespace = $container->getNamespace();
+
+        if ($namespace === null || $namespace === '')
+            throw new \InvalidArgumentException(
+                'Namespace can`t be empty And Must Set.'
+            );
+
+        $_c_namespace = $this->__canonicalizeName($namespace);
+        if (isset($this->__nestRight[$_c_namespace]))
+            throw new \InvalidArgumentException(sprintf(
+                'Namespace (%s) is exists on container:%s'
+                , $namespace , $this->getNamespace()
+            ));
+
+        $nestedCnt = clone $container;
+        $nestedCnt->__nestLeft = $this; // set parent container
+        $nestedCnt->setNamespace($namespace);
+
+        $this->__nestRight[$_c_namespace] = $nestedCnt;
+
+        return $this;
+    }
+
+    /**
+     * Retrieve Nested Container
+     *
+     * @param string $namespace
+     *
+     * @throws \Exception On Namespace not found
+     * @return Container
+     */
+    function from($namespace)
+    {
+        if ($namespace === '')
+            # from recursion calls
+            return $this;
+        elseif (!strstr($namespace, self::SEPARATOR)) {
+            $_c_namespace = $this->__canonicalizeName($namespace);
+            if (!isset($this->__nestRight[$_c_namespace]))
+                throw new \Exception(sprintf(
+                    'Namespace "%s" not found on "%s".'
+                    , $namespace , get_class($this)
+                ));
+
+            return $this->__nestRight[$_c_namespace];
+        }
+
+        $namespace    = rtrim($namespace, self::SEPARATOR);
+        $brkNamespace = explode(self::SEPARATOR, $namespace);
+
+        ## /root/to/nested/namespace
+        $cNamespace   = array_shift($brkNamespace);
+        $cContainer   = $this;
+        if ($cNamespace === '') { ## start with /
+            // Goto Root Container
+            while ($cContainer->__nestLeft)
+                $cContainer = $cContainer->__nestLeft;
+        }
+        else
+            $cContainer = $this->from($cNamespace);
+
+        return $cContainer->from(implode(self::SEPARATOR, $brkNamespace));
+    }
+
+    /**
+     * Retrieve Or Build Nested Container
+     *
+     * @param string $namespace
+     *
+     * @return Container|false
+     */
+    function with($namespace)
+    {
+        $namespace = $this->__canonicalizeName($namespace);
+
+        if (!isset($this->__nestRight[$namespace]))
+            return false;
+
+        return $this->from($namespace);
+    }
+
+
+    // ...
+
     /**
      * Canonicalize name
      *
@@ -532,98 +630,5 @@ class Container implements iContainer
             ));
 
         return $this->_tmp__canonicalNames[$name] = $canonicalName;
-    }
-
-    // Nested Containers:
-
-    /**
-     * Nest A Copy Of Container Within This Container
-     *
-     * @param Container   $container
-     * @param string|null $namespace Container Namespace
-     *
-     * @return $this
-     */
-    function nest(Container $container, $namespace = null)
-    {
-        // Use Container Namespace if not provided as argument
-        $namespace = ($namespace === null) ? $container->getNamespace()
-            : $this->__canonicalizeName($namespace);
-
-        if ($namespace === null || $namespace === '')
-            throw new \InvalidArgumentException(sprintf(
-                'Namespace can`t be empty And Must Set.'
-                , $namespace , $this->getNamespace()
-            ));
-
-        if (isset($this->__nestRight[$namespace]))
-            throw new \InvalidArgumentException(sprintf(
-                'Namespace "%s" is exists on container:%s'
-                , $namespace , $this->getNamespace()
-            ));
-
-        $nestedCnt = clone $container;
-        $nestedCnt->__nestLeft = $this; // set parent container
-        $nestedCnt->setNamespace($namespace);
-
-        $this->__nestRight[$namespace] = $nestedCnt;
-
-        return $this;
-    }
-
-    /**
-     * Retrieve Nested Container
-     *
-     * @param string $namespace
-     *
-     * @throws \Exception On Namespace not found
-     * @return Container
-     */
-    function from($namespace)
-    {
-        if ($namespace === '')
-            # from recursion calls
-            return $this;
-        elseif (!strstr($namespace, self::SEPARATOR)) {
-            if (!isset($this->__nestRight[$namespace]))
-                throw new \Exception(sprintf(
-                    'Namespace "%s" not found on "%s".'
-                    , $namespace , get_class($this)
-                ));
-
-            return $this->__nestRight[$namespace];
-        }
-
-        $namespace    = rtrim($namespace, self::SEPARATOR);
-        $brkNamespace = explode(self::SEPARATOR, $namespace);
-
-        $cNamespace   = array_shift($brkNamespace);
-        $cContainer   = $this;
-        if ($cNamespace === '') {
-            // Goto Root Container
-            while ($cContainer->__nestLeft)
-                $cContainer = $cContainer->__nestLeft;
-        }
-        else
-            $cContainer = $this->from($cNamespace);
-
-        return $cContainer->from(implode(self::SEPARATOR, $brkNamespace));
-    }
-
-    /**
-     * Retrieve Or Build Nested Container
-     *
-     * @param string $namespace
-     *
-     * @return Container|false
-     */
-    function with($namespace)
-    {
-        $namespace = $this->__canonicalizeName($namespace);
-
-        if (!isset($this->__nestRight[$namespace]))
-            return false;
-
-        return $this->from($namespace);
     }
 }
