@@ -105,7 +105,7 @@ class ContainerBuilder
      * @throws \Exception
      * @return void
      */
-    function buildContainer(/*Container*/ $container)
+    function build(/*Container*/ $container)
     {
         if (!$container instanceof Container)
             throw new \Exception(sprintf(

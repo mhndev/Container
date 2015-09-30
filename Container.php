@@ -79,7 +79,7 @@ class Container implements iContainer
     function __construct(iContainerBuilder $cBuilder = null)
     {
         if ($cBuilder !== null)
-            $cBuilder->buildContainer($this);
+            $cBuilder->build($this);
     }
 
     /**

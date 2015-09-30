@@ -8,5 +8,5 @@ interface iContainerBuilder
      *
      * @param iContainer $container
      */
-    function buildContainer(/*iContainer*/ $container);
+    function build(/*iContainer*/ $container);
 }
