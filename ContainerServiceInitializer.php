@@ -31,7 +31,7 @@ class ContainerServiceInitializer implements iCServiceInitializer
         if (!is_callable($methodCallable))
             throw new \InvalidArgumentException('Param must be callable');
 
-        $this->queue()->insert($methodCallable, $priority);
+        $this->__getPriorityQueue()->insert($methodCallable, $priority);
 
         return $this;
     }
@@ -51,7 +51,7 @@ class ContainerServiceInitializer implements iCServiceInitializer
             ? ( ($initializer->getPriority() !== null) ? $initializer->getPriority() : 10)
             : $priority;
 
-        $this->queue()->insert($initializer, $priority);
+        $this->__getPriorityQueue()->insert($initializer, $priority);
 
         return $this;
     }
@@ -65,7 +65,7 @@ class ContainerServiceInitializer implements iCServiceInitializer
      */
     function initialize($service)
     {
-        foreach(clone $this->queue() as $initializer)
+        foreach(clone $this->__getPriorityQueue() as $initializer)
         {
             // TODO: Handle Exception Retrieval
 
@@ -85,7 +85,7 @@ class ContainerServiceInitializer implements iCServiceInitializer
             else
                 throw new \InvalidArgumentException(sprintf(
                     'Invalid Initializer Provided. (%s)'
-                    , serialize($initializer)
+                    , \Poirot\Core\flatten($initializer)
                 ));
         }
     }
@@ -105,7 +105,7 @@ class ContainerServiceInitializer implements iCServiceInitializer
      *
      * @return \SplPriorityQueue
      */
-    protected function queue()
+    protected function __getPriorityQueue()
     {
         if (!$this->priorityQueue)
             $this->priorityQueue = new \SplPriorityQueue();
