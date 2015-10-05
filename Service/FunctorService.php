@@ -53,13 +53,13 @@ class FunctorService extends AbstractService
      * - new FunctorService([ 'callable' => [..] ..options])
      *
      * @param array|callable $options
-     * @param null|string    $name
+     * @param null|string    $service
      */
-    function __construct($options = null, $name = null)
+    function __construct($options = null, $service = null)
     {
-        if (is_callable($name)) {
+        if (is_callable($service)) {
             ## __construct('name', [$this, 'method'])
-            $this->setCallable($name);
+            $this->setCallable($service);
             $this->setName($options);
         }
         else
