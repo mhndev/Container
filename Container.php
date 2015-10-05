@@ -546,6 +546,8 @@ class Container implements iContainer
      */
     function from($namespace)
     {
+        $namespace = strtr($namespace, ['\\' => self::SEPARATOR]);
+
         if ($namespace === '')
             # from recursion calls
             return $this;

@@ -6,9 +6,33 @@ class InstanceService extends AbstractService
     protected $service;
 
     /**
+     * Construct
+     *
+     * also can used as:
+     * - new InstanceService('name', $service);
+     * or setter set
+     * - new InstanceService([ 'service' => [..] ..options])
+     *
+     * @param array|callable $options
+     * @param null|string    $service
+     */
+    function __construct($options = null, $service = null)
+    {
+        if (is_array($options)) {
+            ## ['callable' => '..', ..]
+            $this->from($options);
+        }
+        elseif (is_string($options)) {
+            ## __construct('name', [$this, 'method'])
+            $this->setName($options);
+            $this->setService($service);
+        }
+    }
+
+    /**
      * Create Service
      *
-     * TODO invoke options as new instance constructor
+     * TODO $this->invoke_options as new instance constructor
      *
      * @return mixed
      */

@@ -51,7 +51,7 @@ class InvokablePlugins
             $plugin = $this->plugins->get($method, $options);
         } catch (ContainerServNotFoundException $e) {
             ## service not found
-            throw new SCInvokablePluginNotFound("Method Invokable ({$method}) not found.", null , $e);
+            throw new SCInvokablePluginNotFound("Invokable Method ({$method}) not found as a plugin.", null , $e);
         }
 
         if (is_callable($plugin)) {
