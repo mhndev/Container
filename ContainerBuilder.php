@@ -5,6 +5,7 @@ use Poirot\Container\Interfaces\iContainerBuilder;
 use Poirot\Container\Interfaces\iCService;
 use Poirot\Container\Interfaces\iCServiceInitializer;
 use Poirot\Container\Service\FunctorService;
+use Poirot\Container\Service\InstanceService;
 use Poirot\Core\AbstractOptions;
 use Poirot\Core\BuilderSetterTrait;
 use Poirot\Core\Interfaces\iBuilderSetter;
@@ -38,6 +39,8 @@ $container = new ContainerManager(new ContainerBuilder([
             },
             'allow_override' => false
         ],
+ *
+ *      'HomeInfo' => 'Application\Actions\HomeInfo',
 
  *      // or
         # just a iCService Implementation,
@@ -194,6 +197,7 @@ class ContainerBuilder
                     // *** Looking For Class 'Path\To\Class'
                     // ***
                     $class   = $service;
+                    $name    = $key;
                     $service = []; // service without options
                 }
 
@@ -210,19 +214,11 @@ class ContainerBuilder
                     $instance->from($service);
 
                 if (!$instance instanceof iCService) {
-                    if (!array_key_exists('name', $service))
+                    if (!array_key_exists('name', $service) && !isset($name))
                         throw new \InvalidArgumentException($this->namespace.": Service '$key' not recognized.");
 
-                    $name = $service['_name_'];
-                    unset($service['name']);
-
-                    $instance = new FunctorService([
-                        'name' => $name,
-                        'callable' => function () use ($instance) {
-                            // Delegates will bind to service object as closure method
-                            return $instance;
-                        },
-                    ]);
+                    $name     = (isset($service['_name_'])) ? $service['_name_'] : $name;
+                    $instance = new InstanceService($name, $instance);
                 }
 
                 $container->set($instance);
